@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coffee Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f1ea; }
+        .btn { padding: 20px 40px; font-size: 20px; margin: 10px; cursor: pointer; border-radius: 8px; border: none; color: white; }
+        .power { background-color: #e74c3c; }
+        .brew { background-color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <h1>☕ Coffee Bot Control</h1>
+    <button class="btn power" onclick="fetch('/press/power')">Power Toggle</button>
+    <br>
+    <button class="btn brew" onclick="fetch('/press/brew')">Start Brewing</button>
+</body>
+</html>
