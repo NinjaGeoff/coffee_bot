@@ -35,7 +35,7 @@ This project uses **Raspberry Pi OS Lite (32-bit)** to keep the system lightweig
 5. **Write:** Click "Write" and wait for it to finish.
 6. **Boot:** Insert the card into the Pi Zero W and power it on. It will take 1-2 minutes to perform the first boot and connect to your network.
 
-## 🔑 Accessing the Pi
+### Accessing the Pi
 Once the Pi is on your network, open your terminal (VS Code or PowerShell) and run:
 `ssh pi@coffeebot.local`
 
