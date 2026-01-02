@@ -2,7 +2,7 @@
 
 A Raspberry Pi Zero W project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver.
 
-### None of this has actually been tested yet, so I wouldn't try to use it, I don't really know what I'm doing.
+### None of this has actually been tested yet, so I wouldn't try to use it, I don't really know what I'm doing. Seriously, follow this at your own risk, solenoids could potentially zap your pi or pi hat if not hooked up correctly.
 
 ## Hardware
 - **Controller:** Raspberry Pi Zero W
@@ -28,29 +28,29 @@ This project uses **Raspberry Pi OS Lite (32-bit)** to keep the system lightweig
 2. **Select OS:** Choose `Raspberry Pi OS (Other)` -> `Raspberry Pi OS Lite (32-bit)`.
 3. **Select Storage:** Choose your microSD card.
 4. **Edit Settings (The Gear Icon):**
-   - **Hostname:** Set to `coffeebot` (or your choice).
+   - **Hostname:** Set to `coffee-bot` (or your choice).
    - **SSH:** Enable SSH and use password authentication.
    - **User:** Set a username (e.g., `pi`) and password.
    - **Wi-Fi:** Enter your SSID and Password. Set the Wireless LAN country.
 5. **Write:** Click "Write" and wait for it to finish.
 6. **Boot:** Insert the card into the Pi Zero W and power it on. It will take 1-2 minutes to perform the first boot and connect to your network.
 
-### Accessing the Pi
-Once the Pi is on your network, open your terminal (VS Code or PowerShell) and run:
-`ssh pi@coffeebot.local`
+### Accessing the Pi and running updates
+Once the Pi is on your network, open your terminal (VS Code or PowerShell) and run:  
+`ssh pi@coffee-bot`
+
+Once connected to the Pi via SSH, check for updates and install them:  
+`sudo apt update && sudo apt upgrade -y`
+
 
 ## Getting Started
-1. **Clone the repo to your Pi:**  
+1. **Clone the repo to your Pi and run the setup script:**  
    ```
    git clone https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
+   chmod +x setup.sh
+   ./setup.sh
    ```
-
-2. **Install dependencies:**  
-   `pip install flask`
-
-3. **Run the Web UI:**  
-   `python3 coffee_web.py`  
 
 4. **Access the controls at**  
     `http://<your-pi-ip>:5000`  
