@@ -1,11 +1,48 @@
 #!/bin/bash
 
+# 1. Get the current system timezone
+CURRENT_TZ=$(timedatectl | grep "Time zone" | awk '{print $3}')
+
+echo "-----------------------------------------------"
+echo "COFFEE BOT SYSTEM SETUP"
+echo "CURRENT TIMEZONE: $CURRENT_TZ"
+echo "-----------------------------------------------"
+
+read -p "Is this timezone correct? (y/n): " confirm
+
+if [[ $confirm == [nN] || $confirm == [nN][oO] ]]; then
+    echo "Select your US Timezone (Arizona is separate as it ignores DST):"
+    
+    # Updated list including Arizona
+    options=("US/Eastern" "US/Central" "US/Mountain" "US/Arizona" "US/Pacific" "US/Alaska" "US/Hawaii" "Exit")
+    
+    select opt in "${options[@]}"
+    do
+        case $opt in
+            "US/Eastern"|"US/Central"|"US/Mountain"|"US/Arizona"|"US/Pacific"|"US/Alaska"|"US/Hawaii")
+                echo "Applying timezone: $opt..."
+                sudo timedatectl set-timezone $opt
+                break
+                ;;
+            "Exit")
+                echo "Setup cancelled. No changes made."
+                break
+                ;;
+            *) echo "Invalid option. Please enter a number from the list above.";;
+        esac
+    done
+else
+    echo "Timezone confirmed. Continuing..."
+fi
+
+echo "The system time is now: $(date)"
+
 # 1. Update system and install system dependencies
 echo "--- Installing System Dependencies ---"
 sudo apt update
 sudo apt install -y git python3-pip python3-venv
 
-# 2. Set up Python Virtual Environment
+# 3. Set up Python Virtual Environment
 echo "--- Setting up Python Virtual Environment ---"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 if [ ! -d "$DIR/env" ]; then
@@ -15,11 +52,11 @@ else
     echo "Virtual environment already exists."
 fi
 
-# 3. Install Python Libraries inside the environment
+# 4. Install Python Libraries inside the environment
 echo "--- Installing Python Libraries ---"
 $DIR/env/bin/pip install flask RPi.GPIO
 
-# 4. Create the Systemd Service
+# 5. Create the Systemd Service
 echo "--- Configuring Auto-Start Service ---"
 USER=$(whoami)
 sudo bash -c "cat > /etc/systemd/system/coffeebot.service" << EOF
@@ -37,7 +74,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# 5. Enable and Start
+# 6. Enable and Start
 echo "--- Starting Service ---"
 sudo systemctl daemon-reload
 sudo systemctl enable coffeebot.service
