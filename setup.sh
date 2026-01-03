@@ -45,5 +45,5 @@ sudo systemctl restart coffeebot.service
 
 echo "------------------------------------------------"
 echo "SETUP COMPLETE!"
-echo "Your Coffee Bot should be live at: http://$(hostname -I | awk '{print $1}'):5000"
+echo "Your Coffee Bot should be live at: http://$(hostname | awk '{print $1}'):5000 or http://$(hostname -I | awk '{print $1}'):5000"
 echo "Check status with: sudo systemctl status coffeebot.service"

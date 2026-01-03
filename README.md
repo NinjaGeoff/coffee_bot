@@ -46,6 +46,7 @@ Once connected to the Pi via SSH, check for updates and install them:
 ## Getting Started
 1. **Clone the repo to your Pi and run the setup script:**  
    ```
+   sudo apt install git -y
    git clone https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
    chmod +x setup.sh
@@ -53,7 +54,7 @@ Once connected to the Pi via SSH, check for updates and install them:
    ```
 
 4. **Access the controls at**  
-    `http://<your-pi-ip>:5000` or `http://coffee-bot.local:5000/`
+    `http://<your-pi-ip>/` or `http://coffee-bot/`
 
 ## Safety Note
 The solenoids are rated for 3V-5V. The software uses a PWM Duty Cycle of 33% to step down the 9V power supply to a safe level (~3V).

@@ -37,7 +37,8 @@ def press(button_id):
 
 if __name__ == '__main__':
     try:
-        # Run on your local network
-        app.run(host='0.0.0.0', port=5000)
+        app.run(host='0.0.0.0', port=80)
     finally:
+        pwm_a.stop()
+        pwm_b.stop()
         GPIO.cleanup()
