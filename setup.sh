@@ -50,7 +50,17 @@ echo "The system time is now: $(date)"
 # 2. Update system and install system dependencies
 echo "--- Installing System Dependencies ---"
 sudo apt update
-sudo apt install -y git python3-pip python3-venv
+sudo apt install -y git python3-pip python3-venv iptables-persistent
+
+# Install iptables-persistent without the interactive prompts
+echo "Configuring Port 80 to Port 5000 redirection..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
+
+# Apply the redirect rule
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5000
+
+# Save it so it survives reboot
+sudo netfilter-persistent save
 
 # 3. Set up Python Virtual Environment
 echo "--- Setting up Python Virtual Environment ---"
@@ -62,11 +72,9 @@ else
     echo "Virtual environment already exists."
 fi
 
-# 4. Install Python Libraries inside the environment and allow it to run on port 80
+# 4. Install Python Libraries inside the environment
 echo "--- Installing Python Libraries ---"
 $DIR/env/bin/pip install flask RPi.GPIO
-
-sudo setcap 'cap_net_bind_service=+ep' $DIR/env/bin/python3
 
 # 5. Create the Systemd Service
 echo "--- Configuring Auto-Start Service ---"
@@ -94,5 +102,5 @@ sudo systemctl restart coffeebot.service
 
 echo "------------------------------------------------"
 echo "SETUP COMPLETE!"
-echo "Your Coffee Bot should be live at: http://$(hostname | awk '{print $1}'):5000 or http://$(hostname -I | awk '{print $1}'):5000"
+echo "Your Coffee Bot should be live at: http://$(hostname | awk '{print $1}')/ or http://$(hostname -I | awk '{print $1}')/"
 echo "Check status with: sudo systemctl status coffeebot.service"
