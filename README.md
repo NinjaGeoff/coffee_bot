@@ -5,7 +5,7 @@ A Raspberry Pi Zero W project to remotely "press" the physical buttons on a coff
 ### None of this has actually been tested yet, so I wouldn't try to use it, I don't really know what I'm doing. Seriously, follow this at your own risk, solenoids could potentially zap your pi or pi hat if not hooked up correctly.
 
 ## Hardware
-- **Controller:** Raspberry Pi Zero W
+- **Controller:** Raspberry Pi Zero W running Raspberry Pi OS Lite 32-Bit "Trixie"
 - **Driver:** Waveshare Motor Driver HAT
 - **Actuators:** 2x Mini Push-Pull Solenoids (DS-0420S)
 - **Power:** 9V 2A DC Power Supply (PWM throttled via software)
