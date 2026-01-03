@@ -47,7 +47,7 @@ Once connected to the Pi via SSH, check for updates and install them:
 1. **Clone the repo to your Pi and run the setup script:**  
    ```
    sudo apt install git -y
-   git clone -b dev-timezone-setup https://github.com/NinjaGeoff/coffee_bot.git
+   git clone https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
    chmod +x setup.sh
    ./setup.sh
