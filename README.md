@@ -52,9 +52,10 @@ Once connected to the Pi via SSH, check for updates and install them:
    chmod +x setup.sh
    ./setup.sh
    ```
+### During setup it will ask you confirm your timezone and will offer to adjust it if it's incorrect. Currently only has USA timezones programmed in.
 
-4. **Access the controls at**  
-    `http://<your-pi-ip>/` or `http://coffee-bot/`
+2. **Access the controls at**  
+   `http://coffee-bot/` or `http://<your-pi-ip>/`
 
 ## Safety Note
 The solenoids are rated for 3V-5V. The software uses a PWM Duty Cycle of 33% to step down the 9V power supply to a safe level (~3V).

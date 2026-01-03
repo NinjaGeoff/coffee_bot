@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. Get the current system timezone
+# Get the current system timezone
 CURRENT_TZ=$(timedatectl | grep "Time zone" | awk '{print $3}')
 
 echo "-----------------------------------------------"
@@ -11,33 +11,43 @@ echo "-----------------------------------------------"
 read -p "Is this timezone correct? (y/n): " confirm
 
 if [[ $confirm == [nN] || $confirm == [nN][oO] ]]; then
-    echo "Select your US Timezone (Arizona is separate as it ignores DST):"
+    echo "Select your Timezone region:"
     
-    # Updated list including Arizona
-    options=("US/Eastern" "US/Central" "US/Mountain" "US/Arizona" "US/Pacific" "US/Alaska" "US/Hawaii" "Exit")
+    # Standardized to America/[City] format
+    options=(
+        "America/New_York" 
+        "America/Chicago" 
+        "America/Denver" 
+        "America/Phoenix" 
+        "America/Los_Angeles" 
+        "America/Anchorage" 
+        "America/Adak"
+        "Pacific/Honolulu"
+        "Exit"
+    )
     
     select opt in "${options[@]}"
     do
         case $opt in
-            "US/Eastern"|"US/Central"|"US/Mountain"|"US/Arizona"|"US/Pacific"|"US/Alaska"|"US/Hawaii")
+            "America/New_York"|"America/Chicago"|"America/Denver"|"America/Phoenix"|"America/Los_Angeles"|"America/Anchorage"|"America/Adak"|"Pacific/Honolulu")
                 echo "Applying timezone: $opt..."
-                sudo timedatectl set-timezone $opt
+                sudo timedatectl set-timezone "$opt"
                 break
                 ;;
             "Exit")
-                echo "Setup cancelled. No changes made."
+                echo "Setup cancelled."
                 break
                 ;;
-            *) echo "Invalid option. Please enter a number from the list above.";;
+            *) echo "Invalid option. Please enter a number from the list.";;
         esac
     done
 else
-    echo "Timezone confirmed. Continuing..."
+    echo "Timezone confirmed."
 fi
 
 echo "The system time is now: $(date)"
 
-# 1. Update system and install system dependencies
+# 2. Update system and install system dependencies
 echo "--- Installing System Dependencies ---"
 sudo apt update
 sudo apt install -y git python3-pip python3-venv
