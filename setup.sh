@@ -62,9 +62,11 @@ else
     echo "Virtual environment already exists."
 fi
 
-# 4. Install Python Libraries inside the environment
+# 4. Install Python Libraries inside the environment and allow it to run on port 80
 echo "--- Installing Python Libraries ---"
 $DIR/env/bin/pip install flask RPi.GPIO
+
+sudo setcap 'cap_net_bind_service=+ep' $DIR/env/bin/python3
 
 # 5. Create the Systemd Service
 echo "--- Configuring Auto-Start Service ---"
