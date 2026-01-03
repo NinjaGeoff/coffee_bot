@@ -52,7 +52,8 @@ Once connected to the Pi via SSH, check for updates and install them:
    chmod +x setup.sh
    ./setup.sh
    ```
-### During setup it will ask you confirm your timezone and will offer to adjust it if it's incorrect. Currently only has USA timezones programmed in.
+   - During setup it will ask you confirm your timezone and will offer to adjust it if it's incorrect. Currently only has USA timezones programmed in.
+   - You will also have to hit enter twice for setting iptables
 
 2. **Access the controls at**  
    `http://coffee-bot/` or `http://<your-pi-ip>/`
