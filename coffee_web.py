@@ -1,4 +1,5 @@
 import os
+import secrets
 import qrcode
 import apprise
 from flask import Flask, render_template, request
@@ -6,10 +7,38 @@ import RPi.GPIO as GPIO
 import time
 
 # --- NTFY CONFIGURATION ---
-# Replace with your unique topic name, up to 64 characters
-NTFY_TOPIC = "coffee_bot_secure_6412e873"
 STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
 QR_PATH = os.path.join(STATIC_DIR, 'ntfy_qr.png')
+TOPIC_FILE = os.path.join(os.path.dirname(__file__), 'ntfy_topic.txt')
+
+def generate_random_topic():
+    """Generate a random ntfy topic with max length of 64 characters"""
+    prefix = "coffee_bot_"
+    # 64 total chars - len("coffee_bot_") = 53 chars for random string
+    random_length = 64 - len(prefix)
+    random_string = secrets.token_urlsafe(random_length)[:random_length]
+    # Replace URL-unsafe chars that token_urlsafe might produce with safe ones
+    random_string = random_string.replace('-', '').replace('_', '')[:random_length]
+    return prefix + random_string
+
+def get_or_create_topic():
+    """Get existing topic or create a new one"""
+    if os.path.exists(TOPIC_FILE):
+        with open(TOPIC_FILE, 'r') as f:
+            topic = f.read().strip()
+            if topic:
+                print(f"Using existing ntfy topic: {topic}")
+                return topic
+    
+    # Generate new topic
+    topic = generate_random_topic()
+    with open(TOPIC_FILE, 'w') as f:
+        f.write(topic)
+    print(f"Generated new ntfy topic: {topic}")
+    return topic
+
+# Get or create the ntfy topic
+NTFY_TOPIC = get_or_create_topic()
 
 # 1. Initialize Apprise
 apobj = apprise.Apprise()
