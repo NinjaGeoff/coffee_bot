@@ -26,6 +26,7 @@ The Waveshare Motor Driver HAT uses the following GPIO (BCM):
 | **Solenoid B (Brew)** | PWM (Speed) | 16 |
 | **Solenoid B (Brew)** | IN2 (Direction) | 19 |
 </del>
+This section was from before I overhauled how the solenoids are fired, need to figure out if it's still accurate.
 
 ## Prepping your Raspberry Pi
 
