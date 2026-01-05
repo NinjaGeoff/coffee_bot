@@ -8,14 +8,25 @@
         .btn { padding: 20px 40px; font-size: 20px; margin: 10px; cursor: pointer; border-radius: 8px; border: none; color: white; }
         .power { background-color: #e74c3c; }
         .brew { background-color: #2ecc71; }
+        .auto { background-color: #9b59b6; font-size: 24px; padding: 25px 50px; }
         .regenerate { background-color: #3498db; padding: 10px 20px; font-size: 14px; }
         .topic-display { background: #fff; padding: 10px; margin: 20px auto; max-width: 600px; border-radius: 5px; word-break: break-all; }
         .message { padding: 10px; margin: 10px auto; max-width: 600px; border-radius: 5px; display: none; }
         .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .separator { margin: 30px 0; border-top: 2px dashed #ccc; }
     </style>
 </head>
 <body>
     <h1>☕ Coffee Bot Control</h1>
+    
+    <div style="margin: 30px 0;">
+        <button class="btn auto" onclick="fetch('/press/auto')">☕ Auto Brew</button>
+        <p style="color: #666; font-size: 14px;">Powers on, waits 5 seconds, then starts brewing</p>
+    </div>
+    
+    <div class="separator"></div>
+    
+    <h3>Manual Controls</h3>
     <button class="btn power" onclick="fetch('/press/power')">Power Toggle</button>
     <br>
     <button class="btn brew" onclick="fetch('/press/brew')">Start Brewing</button>

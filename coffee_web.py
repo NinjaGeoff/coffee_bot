@@ -5,6 +5,7 @@ import apprise
 from flask import Flask, render_template, request, jsonify
 import RPi.GPIO as GPIO
 import time
+import threading
 
 # --- NTFY CONFIGURATION ---
 STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
@@ -79,6 +80,25 @@ def push_solenoid(pwm_obj):
     time.sleep(0.4)
     pwm_obj.ChangeDutyCycle(0)
 
+def auto_brew_sequence():
+    """Power on, wait 5 seconds, then start brewing"""
+    # Power button
+    push_solenoid(pwm_a)
+    apobj.notify(
+        title="☕ Coffee Bot",
+        body="Auto-brew started: Power button pressed"
+    )
+    
+    # Wait 5 seconds
+    time.sleep(5)
+    
+    # Brew button
+    push_solenoid(pwm_b)
+    apobj.notify(
+        title="☕ Coffee Bot",
+        body="Auto-brew: Brewing started! Coffee will be ready soon."
+    )
+
 @app.route('/')
 def index():
     return render_template('index.html', ntfy_topic=NTFY_TOPIC)
@@ -97,6 +117,12 @@ def press(button_id):
             title="☕ Coffee Bot",
             body="Brew started! Coffee will be ready soon."
         )
+    elif button_id == 'auto':
+        # Run auto-brew in a separate thread so it doesn't block the response
+        thread = threading.Thread(target=auto_brew_sequence)
+        thread.daemon = True
+        thread.start()
+        return "Auto-brew sequence started!", 200
     return f"Done: {button_id}", 200
 
 @app.route('/regenerate_topic', methods=['POST'])
