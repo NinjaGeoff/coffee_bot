@@ -50,7 +50,7 @@ echo "The system time is now: $(date)"
 # 2. Update system and install system dependencies
 echo "--- Installing System Dependencies ---"
 sudo apt update
-sudo apt install -y git python3-pip python3-venv iptables-persistent
+sudo apt install -y git python3-pip python3-venv
 
 # Install iptables-persistent without the interactive prompts
 echo "Configuring Port 80 to Port 5000 redirection..."

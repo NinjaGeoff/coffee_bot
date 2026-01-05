@@ -1,6 +1,29 @@
+import os
+import qrcode
+import apprise
 from flask import Flask, render_template, request
 import RPi.GPIO as GPIO
 import time
+
+# --- NTFY CONFIGURATION ---
+# Replace with your unique topic name, up to 64 characters
+NTFY_TOPIC = "coffee_bot_secure_6412e873"
+STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
+QR_PATH = os.path.join(STATIC_DIR, 'ntfy_qr.png')
+
+# 1. Initialize Apprise
+apobj = apprise.Apprise()
+apobj.add(f'ntfy://{NTFY_TOPIC}')
+
+# 2. Ensure static folder exists and generate QR once
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
+
+if not os.path.exists(QR_PATH):
+    print("Generating ntfy QR code...")
+    data = f"ntfy://ntfy.sh/{NTFY_TOPIC}"
+    img = qrcode.make(data)
+    img.save(QR_PATH)
 
 app = Flask(__name__)
 
