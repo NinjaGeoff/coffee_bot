@@ -84,7 +84,7 @@ Coffee Bot uses [ntfy.sh](https://ntfy.sh) for push notifications to your mobile
 
 ### Regenerating Your Topic:
 If you want to change your notification topic (for privacy or to revoke access):
-1. Click the "🔄 Regenerate Topic" button in the web interface
+1. Click the "Regenerate Topic" button in the web interface
 2. Confirm the action
 3. Scan the new QR code to resubscribe
 
