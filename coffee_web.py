@@ -3,9 +3,12 @@ import secrets
 import qrcode
 import apprise
 from flask import Flask, render_template, request, jsonify
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
+from adafruit_pca9685 import PCA9685
 import time
 import threading
+from board import SCL, SDA
+import busio
 
 # --- NTFY CONFIGURATION ---
 STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
@@ -61,29 +64,41 @@ if not os.path.exists(QR_PATH):
 
 app = Flask(__name__)
 
-# Hardware Setup (Using your safe 33% Duty Cycle)
-MA_PWM, MA_IN2 = 21, 20
-MB_PWM, MB_IN2 = 16, 19
-DUTY_CYCLE = 33 
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup([MA_PWM, MA_IN2, MB_PWM, MB_IN2], GPIO.OUT)
-GPIO.output([MA_IN2, MB_IN2], GPIO.LOW)
+# Setup I2C and PCA9685
+i2c = busio.I2C(SCL, SDA)
+pca = PCA9685(i2c)
+pca.frequency = 1600
 
-pwm_a = GPIO.PWM(MA_PWM, 1000)
-pwm_b = GPIO.PWM(MB_PWM, 1000)
-pwm_a.start(0)
-pwm_b.start(0)
+# Power Setting: 0xFFFF is 100% (9V).
+# 0x7FFF is ~50% (approx 4.5V), safer for your 3-5V solenoids.
+SAFE_POWER = 0xFFFF
 
-def push_solenoid(pwm_obj):
-    pwm_obj.ChangeDutyCycle(DUTY_CYCLE)
-    time.sleep(0.4)
-    pwm_obj.ChangeDutyCycle(0)
+def fire_ma(duration):
+    print(f"Firing Solenoid A (MA) for {duration}s...")
+    pca.channels[0].duty_cycle = SAFE_POWER
+    pca.channels[1].duty_cycle = 0x0000
+    pca.channels[2].duty_cycle = 0xFFFF # Enable Pin
+    time.sleep(duration)
+    # Turn Off
+    pca.channels[0].duty_cycle = 0x0000
+    pca.channels[2].duty_cycle = 0x0000
+
+def fire_mb(duration):
+    print(f"Firing Solenoid B (MB) for {duration}s...")
+    # MB uses channels 3, 4, and 5
+    pca.channels[3].duty_cycle = SAFE_POWER
+    pca.channels[4].duty_cycle = 0x0000
+    pca.channels[5].duty_cycle = 0xFFFF # Enable Pin
+    time.sleep(duration)
+    # Turn Off
+    pca.channels[3].duty_cycle = 0x0000
+    pca.channels[5].duty_cycle = 0x0000
 
 def auto_brew_sequence():
     """Power on, wait 5 seconds, then start brewing"""
     # Power button
-    push_solenoid(pwm_a)
+    fire_ma(0.25)
     apobj.notify(
         title="☕ Coffee Bot",
         body="Auto-brew started: Power button pressed"
@@ -93,7 +108,7 @@ def auto_brew_sequence():
     time.sleep(5)
     
     # Brew button
-    push_solenoid(pwm_b)
+    fire_mb(0.25)
     apobj.notify(
         title="☕ Coffee Bot",
         body="Auto-brew: Brewing started! Coffee will be ready soon."
@@ -106,13 +121,13 @@ def index():
 @app.route('/press/<button_id>')
 def press(button_id):
     if button_id == 'power':
-        push_solenoid(pwm_a)
+        fire_ma(0.25)
         apobj.notify(
             title="☕ Coffee Bot",
             body="Power button pressed"
         )
     elif button_id == 'brew':
-        push_solenoid(pwm_b)
+        fire_mb(0.25)
         apobj.notify(
             title="☕ Coffee Bot",
             body="Brew started! Coffee will be ready soon."
@@ -158,6 +173,5 @@ if __name__ == '__main__':
     try:
         app.run(host='0.0.0.0', port=5000)
     finally:
-        pwm_a.stop()
-        pwm_b.stop()
-        GPIO.cleanup()
+        # Ensure everything is off if script crashes
+        pca.deinit()
