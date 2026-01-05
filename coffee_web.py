@@ -54,8 +54,16 @@ def index():
 def press(button_id):
     if button_id == 'power':
         push_solenoid(pwm_a)
+        apobj.notify(
+            title="☕ Coffee Bot",
+            body="Power button pressed"
+        )
     elif button_id == 'brew':
         push_solenoid(pwm_b)
+        apobj.notify(
+            title="☕ Coffee Bot",
+            body="Brew started! Coffee will be ready soon."
+        )
     return f"Done: {button_id}", 200
 
 if __name__ == '__main__':
