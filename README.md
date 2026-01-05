@@ -12,9 +12,10 @@ A Raspberry Pi project to remotely "press" the physical buttons on a coffee make
 ## Hardware
 - **Controller:** Raspberry Pi Zero W or Pi 3 B+ running Raspberry Pi OS Lite (32-bit or 64-bit)
 - **Driver:** Waveshare Motor Driver HAT
-- **Actuators:** 2x Mini Push-Pull Solenoids (DS-0420S)
+- **Actuators:** ~~2x Mini Push-Pull Solenoids (DS-0420S)~~ These aren't strong enough to push the buttons on my Oxo 8 cup brewer. YMMV
 - **Power:** 9V 2A DC Power Supply (PWM throttled via software)
 
+<del>
 ## Pinout Mapping
 The Waveshare Motor Driver HAT uses the following GPIO (BCM):
 
@@ -24,6 +25,7 @@ The Waveshare Motor Driver HAT uses the following GPIO (BCM):
 | **Solenoid A (Power)** | IN2 (Direction) | 20 |
 | **Solenoid B (Brew)** | PWM (Speed) | 16 |
 | **Solenoid B (Brew)** | IN2 (Direction) | 19 |
+</del>
 
 ## Prepping your Raspberry Pi
 
