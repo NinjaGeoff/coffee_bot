@@ -1,6 +1,6 @@
 # Coffee Bot
 
-A Raspberry Pi project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver. Control your coffee maker via web interface and receive mobile notifications through ntfy. None of this has been tested with actual solenoids/servos/something connected to GPIO yet, so use at your own risk.
+A Raspberry Pi project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver. Control your coffee maker via web interface and receive mobile notifications through ntfy. **None of this has been tested with actual solenoids/servos/something connected to GPIO yet, so use at your own risk.**
 
 ## Features
 - **Web Interface** - Control your coffee maker from any device on your network
@@ -160,3 +160,15 @@ coffee_bot/
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Future Plans
+- Add scheduling/timer feature so it can automatically start brewing at the indicated time.
+   - Ability to see current scheduled time
+   - Ability to cancel current scheduled time
+- Breakout different sections of the current web ui into tabs or a menu so it's not so cluttered
+- The existing buttons in the web ui don't give you any feedback when pressed, would like to add some sort of click animation
+- Add a physical button to activate the brewing process without having to move/remove the actual button pressing solenoids from the coffee maker. And because a large button with a resounding "kerchunk" noise would be fun
+- Design an enclousure that will work with the planned hardware, even if it's just a project box with double sided tape and holes drilled in it
+   - Custom 3d printed would be great, but I don't know how to do CAD designs and nor do I have a 3d printer
+- Add a third solenoid as my coffee maker has two brew functions based on size of the brew
+   - Short term will be to figure out a way to at least semi easily choose which button the brew solenoid presses
