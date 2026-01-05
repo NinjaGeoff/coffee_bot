@@ -8,6 +8,10 @@
         .btn { padding: 20px 40px; font-size: 20px; margin: 10px; cursor: pointer; border-radius: 8px; border: none; color: white; }
         .power { background-color: #e74c3c; }
         .brew { background-color: #2ecc71; }
+        .regenerate { background-color: #3498db; padding: 10px 20px; font-size: 14px; }
+        .topic-display { background: #fff; padding: 10px; margin: 20px auto; max-width: 600px; border-radius: 5px; word-break: break-all; }
+        .message { padding: 10px; margin: 10px auto; max-width: 600px; border-radius: 5px; display: none; }
+        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     </style>
 </head>
 <body>
@@ -15,10 +19,53 @@
     <button class="btn power" onclick="fetch('/press/power')">Power Toggle</button>
     <br>
     <button class="btn brew" onclick="fetch('/press/brew')">Start Brewing</button>
+    
     <div class="ntfy-section" style="text-align: center; margin-top: 30px;">
-    <h4>Mobile Alerts</h4>
-    <p>Scan to subscribe via ntfy app:</p>
-    <img src="{{ url_for('static', filename='ntfy_qr.png') }}" alt="ntfy QR Code" style="width: 150px;">
-</div>
+        <h4>Mobile Alerts</h4>
+        <div class="topic-display">
+            <strong>Current Topic:</strong><br>
+            <code id="topic-name">{{ ntfy_topic }}</code>
+        </div>
+        <p>Scan to subscribe via ntfy app:</p>
+        <img id="qr-code" src="{{ url_for('static', filename='ntfy_qr.png') }}?t={{ ntfy_topic }}" alt="ntfy QR Code" style="width: 150px;">
+        <br><br>
+        <button class="btn regenerate" onclick="regenerateTopic()">🔄 Regenerate Topic</button>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        function regenerateTopic() {
+            if (!confirm('This will generate a new topic. All previous subscribers will need to scan the new QR code. Continue?')) {
+                return;
+            }
+            
+            fetch('/regenerate_topic', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update topic display
+                        document.getElementById('topic-name').textContent = data.new_topic;
+                        
+                        // Force reload QR code image with cache busting
+                        const qrImg = document.getElementById('qr-code');
+                        qrImg.src = '/static/ntfy_qr.png?t=' + Date.now();
+                        
+                        // Show success message
+                        const msgDiv = document.getElementById('message');
+                        msgDiv.textContent = data.message;
+                        msgDiv.className = 'message success';
+                        msgDiv.style.display = 'block';
+                        
+                        // Hide message after 5 seconds
+                        setTimeout(() => {
+                            msgDiv.style.display = 'none';
+                        }, 5000);
+                    }
+                })
+                .catch(error => {
+                    alert('Error regenerating topic: ' + error);
+                });
+        }
+    </script>
 </body>
 </html>

@@ -2,7 +2,7 @@ import os
 import secrets
 import qrcode
 import apprise
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import RPi.GPIO as GPIO
 import time
 
@@ -37,6 +37,13 @@ def get_or_create_topic():
     print(f"Generated new ntfy topic: {topic}")
     return topic
 
+def regenerate_qr(topic):
+    """Generate QR code for the given topic"""
+    data = f"ntfy://ntfy.sh/{topic}"
+    img = qrcode.make(data)
+    img.save(QR_PATH)
+    print(f"QR code regenerated for topic: {topic}")
+
 # Get or create the ntfy topic
 NTFY_TOPIC = get_or_create_topic()
 
@@ -49,10 +56,7 @@ if not os.path.exists(STATIC_DIR):
     os.makedirs(STATIC_DIR)
 
 if not os.path.exists(QR_PATH):
-    print("Generating ntfy QR code...")
-    data = f"ntfy://ntfy.sh/{NTFY_TOPIC}"
-    img = qrcode.make(data)
-    img.save(QR_PATH)
+    regenerate_qr(NTFY_TOPIC)
 
 app = Flask(__name__)
 
@@ -77,7 +81,7 @@ def push_solenoid(pwm_obj):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', ntfy_topic=NTFY_TOPIC)
 
 @app.route('/press/<button_id>')
 def press(button_id):
@@ -94,6 +98,35 @@ def press(button_id):
             body="Brew started! Coffee will be ready soon."
         )
     return f"Done: {button_id}", 200
+
+@app.route('/regenerate_topic', methods=['POST'])
+def regenerate_topic():
+    global NTFY_TOPIC, apobj
+    
+    # Generate new topic
+    new_topic = generate_random_topic()
+    
+    # Save to file
+    with open(TOPIC_FILE, 'w') as f:
+        f.write(new_topic)
+    
+    # Update global variable
+    NTFY_TOPIC = new_topic
+    
+    # Regenerate QR code
+    regenerate_qr(new_topic)
+    
+    # Reinitialize Apprise with new topic
+    apobj = apprise.Apprise()
+    apobj.add(f'ntfy://{new_topic}')
+    
+    print(f"Topic regenerated: {new_topic}")
+    
+    return jsonify({
+        'success': True,
+        'new_topic': new_topic,
+        'message': 'Topic regenerated successfully! Scan the new QR code to subscribe.'
+    })
 
 if __name__ == '__main__':
     try:
