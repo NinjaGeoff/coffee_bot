@@ -1,11 +1,16 @@
 # Coffee Bot
 
-A Raspberry Pi Zero W project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver.
+A Raspberry Pi project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver. Control your coffee maker via web interface and receive mobile notifications through ntfy.
 
-### None of this has actually been tested yet, so I wouldn't try to use it, I don't really know what I'm doing. Seriously, follow this at your own risk, solenoids could potentially zap your pi or pi hat if not hooked up correctly.
+## Features
+- **Web Interface** - Control your coffee maker from any device on your network
+- **Mobile Notifications** - Get alerts via ntfy when buttons are pressed
+- **Secure Topics** - Randomly generated ntfy topics for privacy
+- **Topic Regeneration** - Change your notification topic anytime via web UI
+- **Auto-Start** - Runs as a systemd service, starts on boot
 
 ## Hardware
-- **Controller:** Raspberry Pi Zero W running Raspberry Pi OS Lite 32-Bit "Trixie"
+- **Controller:** Raspberry Pi Zero W or Pi 3 B+ running Raspberry Pi OS Lite (32-bit or 64-bit)
 - **Driver:** Waveshare Motor Driver HAT
 - **Actuators:** 2x Mini Push-Pull Solenoids (DS-0420S)
 - **Power:** 9V 2A DC Power Supply (PWM throttled via software)
@@ -22,10 +27,10 @@ The Waveshare Motor Driver HAT uses the following GPIO (BCM):
 
 ## Prepping your Raspberry Pi
 
-This project uses **Raspberry Pi OS Lite (32-bit)** to keep the system lightweight. It runs headless, so no monitor, mouse, or keyboard will need to be hooked up. We'll use SSH to connect to and configure the Pi. These steps may work for other models of the Pi, but I'm working specifically with a Pi Zero W. The below steps are assuming you have a brand new Pi out of the oven and need to set it up from scratch.
+This project uses **Raspberry Pi OS Lite** (32-bit or 64-bit) to keep the system lightweight. It runs headless, so no monitor, mouse, or keyboard will need to be hooked up. We'll use SSH to connect to and configure the Pi.
 
 1. **Download Raspberry Pi Imager:** Get it from [raspberrypi.com/software](https://www.raspberrypi.com/software/). Once installed, run it.
-2. **Select OS:** Choose `Raspberry Pi OS (Other)` -> `Raspberry Pi OS Lite (32-bit)`.
+2. **Select OS:** Choose `Raspberry Pi OS (Other)` -> `Raspberry Pi OS Lite (32-bit)` or `Raspberry Pi OS Lite (64-bit)`.
 3. **Select Storage:** Choose your microSD card.
 4. **Edit Settings (The Gear Icon):**
    - **Hostname:** Set to `coffee-bot` (or your choice).
@@ -33,30 +38,125 @@ This project uses **Raspberry Pi OS Lite (32-bit)** to keep the system lightweig
    - **User:** Set a username (e.g., `pi`) and password.
    - **Wi-Fi:** Enter your SSID and Password. Set the Wireless LAN country.
 5. **Write:** Click "Write" and wait for it to finish.
-6. **Boot:** Insert the card into the Pi Zero W and power it on. It will take 1-2 minutes to perform the first boot and connect to your network.
+6. **Boot:** Insert the card into the Pi and power it on. It will take 1-2 minutes to perform the first boot and connect to your network.
 
 ### Accessing the Pi and running updates
-Once the Pi is on your network, open your terminal (VS Code or PowerShell) and run:  
-`ssh pi@coffee-bot`
+Once the Pi is on your network, open your terminal and run:  
+```bash
+ssh pi@coffee-bot
+```
 
 Once connected to the Pi via SSH, check for updates and install them:  
-`sudo apt update && sudo apt upgrade -y`
-
+```bash
+sudo apt update && sudo apt upgrade -y
+```
 
 ## Getting Started
 1. **Clone the repo to your Pi and run the setup script:**  
-   ```
+   ```bash
    sudo apt install git -y
    git clone https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
    chmod +x setup.sh
    ./setup.sh
    ```
-   - During setup it will ask you confirm your timezone and will offer to adjust it if it's incorrect. Currently only has USA timezones programmed in.
-   - You will also have to hit enter twice for setting iptables
+   - During setup it will ask you to confirm your timezone and will offer to adjust it if it's incorrect. Currently only has USA timezones programmed in.
+   - The setup script will automatically configure port forwarding from port 80 to port 5000 without prompts.
 
-2. **Access the controls at**  
+2. **Access the web interface at:**  
    `http://coffee-bot/` or `http://<your-pi-ip>/`
 
-## Safety Note
-The solenoids are rated for 3V-5V. The software uses a PWM Duty Cycle of 33% to step down the 9V power supply to a safe level (~3V).
+## Using Mobile Notifications
+
+Coffee Bot uses [ntfy.sh](https://ntfy.sh) for push notifications to your mobile device.
+
+### Setup Mobile Notifications:
+1. Install the ntfy app on your phone:
+   - [iOS App Store](https://apps.apple.com/us/app/ntfy/id1625396347)
+   - [Android Play Store](https://play.google.com/store/apps/details?id=io.heckel.ntfy)
+   - [F-Droid](https://f-droid.org/en/packages/io.heckel.ntfy/)
+
+2. Open the Coffee Bot web interface and scroll to the "Mobile Alerts" section
+
+3. Scan the QR code with the ntfy app to subscribe to your unique topic
+
+4. You'll now receive notifications when buttons are pressed!
+
+### Regenerating Your Topic:
+If you want to change your notification topic (for privacy or to revoke access):
+1. Click the "🔄 Regenerate Topic" button in the web interface
+2. Confirm the action
+3. Scan the new QR code to resubscribe
+
+**Note:** When you regenerate the topic, all previous subscribers will need to scan the new QR code.
+
+## Managing the Service
+
+Check service status:
+```bash
+sudo systemctl status coffeebot.service
+```
+
+View logs:
+```bash
+sudo journalctl -u coffeebot.service -f
+```
+
+Restart service (after making code changes):
+```bash
+sudo systemctl restart coffeebot.service
+```
+
+Stop service:
+```bash
+sudo systemctl stop coffeebot.service
+```
+
+## Updating the Code
+
+If you've made changes to the code on GitHub and want to update your Pi:
+
+```bash
+cd ~/coffee_bot
+git pull origin main
+sudo systemctl restart coffeebot.service
+```
+
+## Project Structure
+
+```
+coffee_bot/
+├── coffee_web.py          # Main Flask application
+├── setup.sh               # Automated setup script
+├── templates/
+│   └── index.html         # Web interface
+├── static/
+│   └── ntfy_qr.png        # Auto-generated QR code
+├── ntfy_topic.txt         # Auto-generated topic file (do not commit)
+└── README.md
+```
+
+## Safety Notes
+- The solenoids are rated for 3V-5V. The software uses a PWM Duty Cycle of 33% to step down the 9V power supply to a safe level (~3V).
+- Ensure proper wiring and insulation when working with the motor driver HAT.
+- Always disconnect power when making hardware changes.
+
+## Troubleshooting
+
+**Web interface won't load:**
+- Check service status: `sudo systemctl status coffeebot.service`
+- Verify the Pi is on your network: `ping coffee-bot`
+- Check for errors in logs: `sudo journalctl -u coffeebot.service -n 50`
+
+**Notifications not working:**
+- Verify you're subscribed to the correct topic in the ntfy app
+- Check that the topic is displayed correctly on the web interface
+- Test by pressing a button and checking the app
+
+**Solenoids not activating:**
+- Verify GPIO connections match the pinout table
+- Check power supply is connected and providing 9V
+- Ensure the motor driver HAT is properly seated on the Pi
+
+## License
+This project is provided as-is for educational and personal use. Use at your own risk.
