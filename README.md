@@ -1,6 +1,6 @@
 # Coffee Bot
 
-A Raspberry Pi project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver. Control your coffee maker via web interface and receive mobile notifications through ntfy.
+A Raspberry Pi project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver. Control your coffee maker via web interface and receive mobile notifications through ntfy. None of this has been tested with actual solenoids/servos/something connected to GPIO yet, so use at your own risk.
 
 ## Features
 - **Web Interface** - Control your coffee maker from any device on your network
@@ -61,7 +61,7 @@ sudo apt update && sudo apt upgrade -y
    ./setup.sh
    ```
    - During setup it will ask you to confirm your timezone and will offer to adjust it if it's incorrect. Currently only has USA timezones programmed in.
-   - The setup script will automatically configure port forwarding from port 80 to port 5000 without prompts.
+   - The setup script will automatically configure port forwarding from port 80 to port 5000 without prompts using iptables-persistent.
 
 2. **Access the web interface at:**  
    `http://coffee-bot/` or `http://<your-pi-ip>/`
@@ -78,7 +78,7 @@ Coffee Bot uses [ntfy.sh](https://ntfy.sh) for push notifications to your mobile
 
 2. Open the Coffee Bot web interface and scroll to the "Mobile Alerts" section
 
-3. Scan the QR code with the ntfy app to subscribe to your unique topic
+3. Scan the QR code to get the ntfy topic URL. Android phones should auto-add it to the ntfy app, not tested with iOS.
 
 4. You'll now receive notifications when buttons are pressed!
 
@@ -130,7 +130,7 @@ coffee_bot/
 ├── setup.sh               # Automated setup script
 ├── templates/
 │   └── index.html         # Web interface
-├── static/
+├── static/                # Folder generates on first run of coffee_web.py
 │   └── ntfy_qr.png        # Auto-generated QR code
 ├── ntfy_topic.txt         # Auto-generated topic file (do not commit)
 └── README.md
@@ -159,4 +159,4 @@ coffee_bot/
 - Ensure the motor driver HAT is properly seated on the Pi
 
 ## License
-This project is provided as-is for educational and personal use. Use at your own risk.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
