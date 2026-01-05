@@ -74,7 +74,7 @@ fi
 
 # 4. Install Python Libraries inside the environment
 echo "--- Installing Python Libraries ---"
-$DIR/env/bin/pip install flask RPi.GPIO
+$DIR/env/bin/pip install flask RPi.GPIO apprise qrcode[pil]
 
 # 5. Create the Systemd Service
 echo "--- Configuring Auto-Start Service ---"

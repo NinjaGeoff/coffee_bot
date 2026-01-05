@@ -15,5 +15,10 @@
     <button class="btn power" onclick="fetch('/press/power')">Power Toggle</button>
     <br>
     <button class="btn brew" onclick="fetch('/press/brew')">Start Brewing</button>
+    <div class="ntfy-section" style="text-align: center; margin-top: 30px;">
+    <h4>Mobile Alerts</h4>
+    <p>Scan to subscribe via ntfy app:</p>
+    <img src="{{ url_for('static', filename='ntfy_qr.png') }}" alt="ntfy QR Code" style="width: 150px;">
+</div>
 </body>
 </html>
