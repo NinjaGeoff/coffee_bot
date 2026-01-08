@@ -4,7 +4,7 @@
 CURRENT_TZ=$(timedatectl | grep "Time zone" | awk '{print $3}')
 
 echo "-----------------------------------------------"
-echo "COFFEE BOT SYSTEM SETUP"
+echo "COFFEE BOT SYSTEM SETUP - SERVO VERSION"
 echo "CURRENT TIMEZONE: $CURRENT_TZ"
 echo "-----------------------------------------------"
 
@@ -73,15 +73,17 @@ else
 fi
 
 # 4. Install Python Libraries inside the environment
+# NOTE: Removed adafruit-circuitpython-pca9685 as we're now using direct GPIO control
+# Added requests for ntfy notifications
 echo "--- Installing Python Libraries ---"
-$DIR/env/bin/pip install flask RPi.GPIO apprise qrcode[pil] adafruit-circuitpython-pca9685
+$DIR/env/bin/pip install flask RPi.GPIO qrcode[pil] requests
 
 # 5. Create the Systemd Service
 echo "--- Configuring Auto-Start Service ---"
 USER=$(whoami)
 sudo bash -c "cat > /etc/systemd/system/coffeebot.service" << EOF
 [Unit]
-Description=Coffee Bot Flask Web Server
+Description=Coffee Bot Flask Web Server (Servo Version)
 After=network.target
 
 [Service]
@@ -102,5 +104,14 @@ sudo systemctl restart coffeebot.service
 
 echo "------------------------------------------------"
 echo "SETUP COMPLETE!"
-echo "Your Coffee Bot should be live at: http://$(hostname | awk '{print $1}')/ or http://$(hostname -I | awk '{print $1}')/"
+echo "------------------------------------------------"
+echo "Your Coffee Bot (Servo Version) should be live at:"
+echo "  http://$(hostname | awk '{print $1}')/"
+echo "  http://$(hostname -I | awk '{print $1}')/"
+echo ""
+echo "Servo Connections:"
+echo "  Servo 1 (Power): GPIO 12 (Pin 32), 5V (Pin 2), GND (Pin 6)"
+echo "  Servo 2 (Brew):  GPIO 13 (Pin 33), 5V (Pin 4), GND (Pin 9)"
+echo ""
 echo "Check status with: sudo systemctl status coffeebot.service"
+echo "------------------------------------------------"

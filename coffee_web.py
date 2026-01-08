@@ -1,177 +1,268 @@
+#!/usr/bin/env python3
+"""
+Coffee Bot Web Interface - Servo Control Version
+Flask web server for controlling coffee brewing with MG90S servos
+"""
+
+from flask import Flask, render_template, request, jsonify, url_for, send_from_directory
+import RPi.GPIO as GPIO
+import time
+from datetime import datetime
 import os
 import secrets
 import qrcode
-import apprise
-from flask import Flask, render_template, request, jsonify
-# import RPi.GPIO as GPIO
-from adafruit_pca9685 import PCA9685
-import time
-import threading
-from board import SCL, SDA
-import busio
-
-# --- NTFY CONFIGURATION ---
-STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
-QR_PATH = os.path.join(STATIC_DIR, 'ntfy_qr.png')
-TOPIC_FILE = os.path.join(os.path.dirname(__file__), 'ntfy_topic.txt')
-
-def generate_random_topic():
-    """Generate a random ntfy topic with max length of 64 characters"""
-    prefix = "coffee_bot_"
-    # 64 total chars - len("coffee_bot_") = 53 chars for random string
-    random_length = 64 - len(prefix)
-    random_string = secrets.token_urlsafe(random_length)[:random_length]
-    # Replace URL-unsafe chars that token_urlsafe might produce with safe ones
-    random_string = random_string.replace('-', '').replace('_', '')[:random_length]
-    return prefix + random_string
-
-def get_or_create_topic():
-    """Get existing topic or create a new one"""
-    if os.path.exists(TOPIC_FILE):
-        with open(TOPIC_FILE, 'r') as f:
-            topic = f.read().strip()
-            if topic:
-                print(f"Using existing ntfy topic: {topic}")
-                return topic
-    
-    # Generate new topic
-    topic = generate_random_topic()
-    with open(TOPIC_FILE, 'w') as f:
-        f.write(topic)
-    print(f"Generated new ntfy topic: {topic}")
-    return topic
-
-def regenerate_qr(topic):
-    """Generate QR code for the given topic"""
-    data = f"ntfy://ntfy.sh/{topic}"
-    img = qrcode.make(data)
-    img.save(QR_PATH)
-    print(f"QR code regenerated for topic: {topic}")
-
-# Get or create the ntfy topic
-NTFY_TOPIC = get_or_create_topic()
-
-# 1. Initialize Apprise
-apobj = apprise.Apprise()
-apobj.add(f'ntfy://{NTFY_TOPIC}')
-
-# 2. Ensure static folder exists and generate QR once
-if not os.path.exists(STATIC_DIR):
-    os.makedirs(STATIC_DIR)
-
-if not os.path.exists(QR_PATH):
-    regenerate_qr(NTFY_TOPIC)
+from io import BytesIO
 
 app = Flask(__name__)
 
+# ============================================================================
+# SERVO CONFIGURATION
+# ============================================================================
 
-# Setup I2C and PCA9685
-i2c = busio.I2C(SCL, SDA)
-pca = PCA9685(i2c)
-pca.frequency = 1600
+# Servo GPIO Pins (connected directly to Pi GPIO)
+SERVO_1_PIN = 12  # GPIO 12 (Pin 32) - Power button
+SERVO_2_PIN = 13  # GPIO 13 (Pin 33) - Brew button
 
-# Power Setting: 0xFFFF is 100% (9V).
-# 0x7FFF is ~50% (approx 4.5V), safer for your 3-5V solenoids.
-SAFE_POWER = 0xFFFF
+# Servo PWM Frequency
+SERVO_FREQUENCY = 50  # Hz
 
-def fire_ma(duration):
-    print(f"Firing Solenoid A (MA) for {duration}s...")
-    pca.channels[0].duty_cycle = SAFE_POWER
-    pca.channels[1].duty_cycle = 0x0000
-    pca.channels[2].duty_cycle = 0xFFFF # Enable Pin
-    time.sleep(duration)
-    # Turn Off
-    pca.channels[0].duty_cycle = 0x0000
-    pca.channels[2].duty_cycle = 0x0000
+# Servo Angle Settings (adjustable via web interface)
+servo_config = {
+    'rest_angle': 0,      # Starting/resting position (degrees)
+    'active_angle': 90,   # Activated position (degrees)
+    'hold_time': 2.0,     # Time to hold in active position (seconds)
+}
 
-def fire_mb(duration):
-    print(f"Firing Solenoid B (MB) for {duration}s...")
-    # MB uses channels 3, 4, and 5
-    pca.channels[3].duty_cycle = SAFE_POWER
-    pca.channels[4].duty_cycle = 0x0000
-    pca.channels[5].duty_cycle = 0xFFFF # Enable Pin
-    time.sleep(duration)
-    # Turn Off
-    pca.channels[3].duty_cycle = 0x0000
-    pca.channels[5].duty_cycle = 0x0000
+# ============================================================================
+# NTFY CONFIGURATION
+# ============================================================================
 
-def auto_brew_sequence():
-    """Power on, wait 5 seconds, then start brewing"""
-    # Power button
-    fire_ma(0.25)
-    apobj.notify(
-        title="☕ Coffee Bot",
-        body="Auto-brew started: Power button pressed"
-    )
+NTFY_TOPIC_FILE = "ntfy_topic.txt"
+STATIC_FOLDER = "static"
+QR_CODE_PATH = os.path.join(STATIC_FOLDER, "ntfy_qr.png")
+
+def get_or_create_topic():
+    """Get existing topic or create a new one"""
+    if os.path.exists(NTFY_TOPIC_FILE):
+        with open(NTFY_TOPIC_FILE, 'r') as f:
+            return f.read().strip()
+    else:
+        return regenerate_topic()
+
+def regenerate_topic():
+    """Generate a new random topic and save it"""
+    new_topic = f"coffeebot-{secrets.token_urlsafe(16)}"
+    with open(NTFY_TOPIC_FILE, 'w') as f:
+        f.write(new_topic)
+    generate_qr_code(new_topic)
+    return new_topic
+
+def generate_qr_code(topic):
+    """Generate QR code for ntfy topic"""
+    os.makedirs(STATIC_FOLDER, exist_ok=True)
+    ntfy_url = f"https://ntfy.sh/{topic}"
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(ntfy_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(QR_CODE_PATH)
+
+def send_ntfy_notification(message):
+    """Send notification to ntfy topic"""
+    try:
+        import requests
+        topic = get_or_create_topic()
+        requests.post(
+            f"https://ntfy.sh/{topic}",
+            data=message.encode('utf-8'),
+            headers={"Title": "Coffee Bot"}
+        )
+    except Exception as e:
+        print(f"Failed to send notification: {e}")
+
+# Initialize topic on startup
+ntfy_topic = get_or_create_topic()
+
+# ============================================================================
+# SERVO CONTROL FUNCTIONS
+# ============================================================================
+
+servo1 = None
+servo2 = None
+
+def setup_servos():
+    """Initialize GPIO and servo PWM"""
+    global servo1, servo2
     
-    # Wait 5 seconds
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    
+    GPIO.setup(SERVO_1_PIN, GPIO.OUT)
+    GPIO.setup(SERVO_2_PIN, GPIO.OUT)
+    
+    servo1 = GPIO.PWM(SERVO_1_PIN, SERVO_FREQUENCY)
+    servo2 = GPIO.PWM(SERVO_2_PIN, SERVO_FREQUENCY)
+    
+    servo1.start(0)
+    servo2.start(0)
+    
+    # Initialize to rest position
+    move_servo(servo1, servo_config['rest_angle'])
+    move_servo(servo2, servo_config['rest_angle'])
+
+
+def angle_to_duty_cycle(angle):
+    """Convert angle (0-180) to duty cycle percentage"""
+    duty_cycle = 2.5 + (angle / 180.0) * 10.0
+    return duty_cycle
+
+
+def move_servo(servo, angle):
+    """Move servo to specified angle"""
+    duty = angle_to_duty_cycle(angle)
+    servo.ChangeDutyCycle(duty)
+    time.sleep(0.5)
+    servo.ChangeDutyCycle(0)
+
+
+def activate_servo(servo, servo_name="Servo"):
+    """Activate servo: move to active position, hold, return to rest"""
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - Activating {servo_name}")
+    
+    move_servo(servo, servo_config['active_angle'])
+    time.sleep(servo_config['hold_time'])
+    move_servo(servo, servo_config['rest_angle'])
+    
+    print(f"{servo_name} operation complete")
+
+
+def press_power():
+    """Press the power button"""
+    print("Pressing POWER button")
+    activate_servo(servo1, "Power Button")
+    send_ntfy_notification("â˜• Power button pressed")
+
+
+def press_brew():
+    """Press the brew button"""
+    print("Pressing BREW button")
+    activate_servo(servo2, "Brew Button")
+    send_ntfy_notification("â˜• Brew button pressed")
+
+
+def auto_brew():
+    """Automated brew sequence: Power on, wait, then brew"""
+    print(f"\n{'='*50}")
+    print(f"AUTO BREW SEQUENCE - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print('='*50)
+    
+    send_ntfy_notification("â˜• Starting auto brew sequence...")
+    
+    # Press power button
+    press_power()
+    print("Waiting 5 seconds for coffee maker to power on...")
     time.sleep(5)
     
-    # Brew button
-    fire_mb(0.25)
-    apobj.notify(
-        title="☕ Coffee Bot",
-        body="Auto-brew: Brewing started! Coffee will be ready soon."
-    )
+    # Press brew button
+    press_brew()
+    
+    print("✓ Auto brew sequence complete!\n")
+    send_ntfy_notification("✓ Auto brew sequence complete!")
+
+
+# ============================================================================
+# WEB ROUTES
+# ============================================================================
 
 @app.route('/')
 def index():
-    return render_template('index.html', ntfy_topic=NTFY_TOPIC)
+    """Main page"""
+    return render_template('index.html', ntfy_topic=ntfy_topic)
 
-@app.route('/press/<button_id>')
-def press(button_id):
-    if button_id == 'power':
-        fire_ma(0.25)
-        apobj.notify(
-            title="☕ Coffee Bot",
-            body="Power button pressed"
-        )
-    elif button_id == 'brew':
-        fire_mb(0.25)
-        apobj.notify(
-            title="☕ Coffee Bot",
-            body="Brew started! Coffee will be ready soon."
-        )
-    elif button_id == 'auto':
-        # Run auto-brew in a separate thread so it doesn't block the response
-        thread = threading.Thread(target=auto_brew_sequence)
-        thread.daemon = True
-        thread.start()
-        return "Auto-brew sequence started!", 200
-    return f"Done: {button_id}", 200
+
+@app.route('/press/<button>')
+def press_button(button):
+    """Handle button presses"""
+    if button == 'power':
+        press_power()
+        return "Power button pressed", 200
+    elif button == 'brew':
+        press_brew()
+        return "Brew button pressed", 200
+    elif button == 'auto':
+        auto_brew()
+        return "Auto brew sequence started", 200
+    else:
+        return "Invalid button", 400
+
 
 @app.route('/regenerate_topic', methods=['POST'])
-def regenerate_topic():
-    global NTFY_TOPIC, apobj
-    
-    # Generate new topic
-    new_topic = generate_random_topic()
-    
-    # Save to file
-    with open(TOPIC_FILE, 'w') as f:
-        f.write(new_topic)
-    
-    # Update global variable
-    NTFY_TOPIC = new_topic
-    
-    # Regenerate QR code
-    regenerate_qr(new_topic)
-    
-    # Reinitialize Apprise with new topic
-    apobj = apprise.Apprise()
-    apobj.add(f'ntfy://{new_topic}')
-    
-    print(f"Topic regenerated: {new_topic}")
-    
+def regenerate_topic_route():
+    """Generate a new ntfy topic"""
+    global ntfy_topic
+    ntfy_topic = regenerate_topic()
     return jsonify({
         'success': True,
-        'new_topic': new_topic,
-        'message': 'Topic regenerated successfully! Scan the new QR code to subscribe.'
+        'new_topic': ntfy_topic,
+        'message': 'Topic regenerated successfully! Scan the new QR code to resubscribe.'
     })
 
-if __name__ == '__main__':
+
+@app.route('/test_servo/<int:servo_num>', methods=['POST'])
+def test_servo(servo_num):
+    """Test individual servo"""
     try:
-        app.run(host='0.0.0.0', port=5000)
+        if servo_num == 1:
+            activate_servo(servo1, "Servo 1 (Power)")
+        elif servo_num == 2:
+            activate_servo(servo2, "Servo 2 (Brew)")
+        else:
+            return jsonify({'success': False, 'message': 'Invalid servo number'})
+        
+        return jsonify({'success': True, 'message': f'Servo {servo_num} test complete'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@app.route('/update_config', methods=['POST'])
+def update_config():
+    """Update servo configuration"""
+    try:
+        data = request.json
+        servo_config['rest_angle'] = data['rest_angle']
+        servo_config['active_angle'] = data['active_angle']
+        servo_config['hold_time'] = data['hold_time']
+        
+        return jsonify({'success': True, 'message': 'Configuration updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@app.route('/config')
+def get_config():
+    """Get current servo configuration"""
+    return jsonify(servo_config)
+
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
+if __name__ == '__main__':
+    print("Coffee Bot Web Interface - Servo Version")
+    print("-" * 50)
+    print(f"ntfy topic: {ntfy_topic}")
+    print("-" * 50)
+    
+    # Setup servos
+    setup_servos()
+    
+    print("Starting web server on port 5000...")
+    print("-" * 50)
+    
+    try:
+        app.run(host='0.0.0.0', port=5000, debug=False)
+    except KeyboardInterrupt:
+        print("\nShutting down...")
     finally:
-        # Ensure everything is off if script crashes
-        pca.deinit()
+        GPIO.cleanup()

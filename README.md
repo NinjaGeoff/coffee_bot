@@ -1,32 +1,51 @@
 # Coffee Bot
 
-A Raspberry Pi project to remotely "press" the physical buttons on a coffee maker using solenoids and a motor driver. Control your coffee maker via web interface and receive mobile notifications through ntfy. **None of this has been tested with actual solenoids/servos/something connected to GPIO yet, so use at your own risk.**
+A Raspberry Pi project to remotely control a coffee maker using servo motors. Control your coffee maker via web interface and receive mobile notifications through ntfy.
 
 ## Features
 - **Web Interface** - Control your coffee maker from any device on your network
+- **Servo Control** - Precise angular control for pressing buttons
 - **Mobile Notifications** - Get alerts via ntfy when buttons are pressed
+- **Adjustable Settings** - Configure servo angles and timing via web UI
 - **Secure Topics** - Randomly generated ntfy topics for privacy
 - **Topic Regeneration** - Change your notification topic anytime via web UI
 - **Auto-Start** - Runs as a systemd service, starts on boot
 
 ## Hardware
 - **Controller:** Raspberry Pi Zero W or Pi 3 B+ running Raspberry Pi OS Lite (32-bit or 64-bit)
-- **Driver:** Waveshare Motor Driver HAT
-- **Actuators:** ~~2x Mini Push-Pull Solenoids (DS-0420S)~~ These aren't strong enough to push the buttons on my Oxo 8 cup brewer. YMMV
-- **Power:** 9V 2A DC Power Supply (PWM throttled via software)
+- **Power Hat:** Waveshare Motor Driver HAT (for power regulation via VIN)
+- **Actuators:** 2x MG90S Servo Motors
+- **Power:** 9V 2A DC Power Supply (connected to Motor Driver HAT VIN)
 
-<del>
+## Servo Connections
+
+Servos are connected directly to Raspberry Pi GPIO pins (bypassing the motor driver for signal control):
+
+**Servo 1 (Power Button):**
+- Brown/Black (Ground) → Pi Pin 6 (Ground)
+- Red (Power) → Pi Pin 2 (5V)
+- Orange/Yellow (Signal) → Pi Pin 32 (GPIO 12)
+
+**Servo 2 (Brew Button):**
+- Brown/Black (Ground) → Pi Pin 9 (Ground) 
+- Red (Power) → Pi Pin 4 (5V)
+- Orange/Yellow (Signal) → Pi Pin 33 (GPIO 13)
+
+**Power:**
+- 9V 2A power supply connected to Waveshare Motor Driver HAT VIN terminal
+- HAT provides regulated power to the Raspberry Pi
+- Servos powered directly from Pi's 5V GPIO pins
+
 ## Pinout Mapping
-The Waveshare Motor Driver HAT uses the following GPIO (BCM):
 
-| Component | Function | GPIO Pin |
-| :--- | :--- | :--- |
-| **Solenoid A (Power)** | PWM (Speed) | 21 |
-| **Solenoid A (Power)** | IN2 (Direction) | 20 |
-| **Solenoid B (Brew)** | PWM (Speed) | 16 |
-| **Solenoid B (Brew)** | IN2 (Direction) | 19 |
-</del>
-This section was from before I overhauled how the solenoids are fired, need to figure out if it's still accurate.
+| Component | Function | GPIO Pin | Physical Pin |
+| :--- | :--- | :--- | :--- |
+| **Servo 1 (Power)** | PWM Signal | GPIO 12 | Pin 32 |
+| **Servo 2 (Brew)** | PWM Signal | GPIO 13 | Pin 33 |
+| **Power (Servo 1)** | 5V | - | Pin 2 |
+| **Ground (Servo 1)** | GND | - | Pin 6 |
+| **Power (Servo 2)** | 5V | - | Pin 4 |
+| **Ground (Servo 2)** | GND | - | Pin 9 |
 
 ## Prepping your Raspberry Pi
 
@@ -37,8 +56,8 @@ This project uses **Raspberry Pi OS Lite** (32-bit or 64-bit) to keep the system
 3. **Select Storage:** Choose your microSD card.
 4. **Edit Settings (The Gear Icon):**
    - **Hostname:** Set to `coffee-bot` (or your choice).
-   - **SSH:** Enable SSH and use password authentication.
-   - **User:** Set a username (e.g., `pi`) and password.
+   - **SSH:** Enable SSH and use password authentication or public key.
+   - **User:** Set a username (e.g., `pi`) and password if not using a public key.
    - **Wi-Fi:** Enter your SSID and Password. Set the Wireless LAN country.
 5. **Write:** Click "Write" and wait for it to finish.
 6. **Boot:** Insert the card into the Pi and power it on. It will take 1-2 minutes to perform the first boot and connect to your network.
@@ -60,6 +79,7 @@ sudo apt update && sudo apt upgrade -y
    sudo apt install git -y
    git clone https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
+   git checkout dev  # Switch to dev branch
    chmod +x setup.sh
    ./setup.sh
    ```
@@ -68,6 +88,16 @@ sudo apt update && sudo apt upgrade -y
 
 2. **Access the web interface at:**  
    `http://coffee-bot/` or `http://<your-pi-ip>/`
+
+## Using the Web Interface
+
+The web interface allows you to:
+
+* **Auto Brew** - Automatically powers on the coffee maker, waits 5 seconds, then starts brewing
+* **Manual Controls** - Press individual power and brew buttons
+* **Servo Testing** - Test each servo individually to verify connections and adjust angles
+* **Servo Configuration** - Adjust rest angle (default 0°), active angle (default 90°), and hold time (default 2 seconds)
+* **Mobile Alerts** - Scan QR code to receive push notifications when buttons are pressed
 
 ## Using Mobile Notifications
 
@@ -81,7 +111,7 @@ Coffee Bot uses [ntfy.sh](https://ntfy.sh) for push notifications to your mobile
 
 2. Open the Coffee Bot web interface and scroll to the "Mobile Alerts" section
 
-3. Scan the QR code to get the ntfy topic URL. Android phones should auto-add it to the ntfy app, not tested with iOS.
+3. Scan the QR code to get the ntfy topic URL. Android phones should auto-add it to the ntfy app.
 
 4. You'll now receive notifications when buttons are pressed!
 
@@ -121,7 +151,7 @@ If you've made changes to the code on GitHub and want to update your Pi:
 
 ```bash
 cd ~/coffee_bot
-git pull origin main
+git pull origin dev
 sudo systemctl restart coffeebot.service
 ```
 
@@ -133,16 +163,30 @@ coffee_bot/
 ├── setup.sh               # Automated setup script
 ├── templates/
 │   └── index.html         # Web interface
-├── static/                # Folder generates on first run of coffee_web.py
+├── static/                # Folder generates on first run
 │   └── ntfy_qr.png        # Auto-generated QR code
 ├── ntfy_topic.txt         # Auto-generated topic file (do not commit)
+├── servo_test.py          # Interactive servo testing script
 └── README.md
 ```
 
+## Servo Tuning Guide
+
+The default servo settings are:
+- **Rest Angle:** 0° (starting position)
+- **Active Angle:** 90° (button press position)
+- **Hold Time:** 2 seconds (how long to hold the button)
+
+To adjust these:
+1. Use the web interface "Servo Configuration" section
+2. Or run `servo_test.py` for interactive testing
+3. Adjust angles in 5-10 degree increments until you find the optimal position for your setup
+
 ## Safety Notes
-- The solenoids are rated for 3V-5V. The software uses a PWM Duty Cycle of 33% to step down the 9V power supply to a safe level (~3V).
-- Ensure proper wiring and insulation when working with the motor driver HAT.
-- Always disconnect power when making hardware changes.
+- The MG90S servos are rated for 4.8-6V and are powered from the Pi's 5V pins
+- The Motor Driver HAT is used only for power regulation (9V to 5V for the Pi)
+- Each servo can draw up to 1A under load - if using both servos simultaneously under heavy load, consider an external 5V power supply
+- Always disconnect power when making hardware changes
 
 ## Troubleshooting
 
@@ -156,22 +200,25 @@ coffee_bot/
 - Check that the topic is displayed correctly on the web interface
 - Test by pressing a button and checking the app
 
-**Solenoids not activating:**
+**Servos not moving:**
 - Verify GPIO connections match the pinout table
-- Check power supply is connected and providing 9V
-- Ensure the motor driver HAT is properly seated on the Pi
+- Check that PWM is enabled on your Raspberry Pi
+- Test individual servos using the web interface "Test Servo" buttons
+- Ensure 9V power supply is connected to the Motor Driver HAT VIN
+- Run `servo_test.py` for interactive debugging
+
+**Servos moving too much/too little:**
+- Adjust the "Active Angle" setting in the web interface
+- Try values between 10-180 degrees to find the optimal range
+- Adjust "Hold Time" if buttons need to be pressed longer
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Future Plans
-- Add scheduling/timer feature so it can automatically start brewing at the indicated time.
-   - Ability to see current scheduled time
-   - Ability to cancel current scheduled time
-- Breakout different sections of the current web ui into tabs or a menu so it's not so cluttered
-- The existing buttons in the web ui don't give you any feedback when pressed, would like to add some sort of click animation
-- Add a physical button to activate the brewing process without having to move/remove the actual button pressing solenoids from the coffee maker. And because a large button with a resounding "kerchunk" noise would be fun
-- Design an enclousure that will work with the planned hardware, even if it's just a project box with double sided tape and holes drilled in it
-   - Custom 3d printed would be great, but I don't know how to do CAD designs and nor do I have a 3d printer
-- Add a third solenoid as my coffee maker has two brew functions based on size of the brew
-   - Short term will be to figure out a way to at least semi easily choose which button the brew solenoid presses
+- Add scheduling/timer feature for automatic brewing at set times
+- Add ability to see and cancel scheduled brew times
+- Breakout different sections of the web UI into tabs or a menu
+- Add a physical button for manual activation
+- Design an enclosure for the hardware
+- Add a third servo for different brew sizes (if coffee maker supports it)
