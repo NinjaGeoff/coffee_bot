@@ -29,8 +29,8 @@ SERVO_FREQUENCY = 50  # Hz
 # Servo Angle Settings (adjustable via web interface)
 servo_config = {
     'rest_angle': 0,      # Starting/resting position (degrees)
-    'active_angle': 90,   # Activated position (degrees)
-    'hold_time': 2.0,     # Time to hold in active position (seconds)
+    'active_angle': 45,   # Activated position (degrees)
+    'hold_time': 0.5,     # Time to hold in active position (seconds)
 }
 
 # ============================================================================
