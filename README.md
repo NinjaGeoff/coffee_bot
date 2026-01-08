@@ -79,7 +79,6 @@ sudo apt update && sudo apt upgrade -y
    sudo apt install git -y
    git clone --branch dev https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
-   git checkout dev  # Switch to dev branch
    chmod +x setup.sh
    ./setup.sh
    ```
