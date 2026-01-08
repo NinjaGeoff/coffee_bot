@@ -77,7 +77,7 @@ sudo apt update && sudo apt upgrade -y
 1. **Clone the repo to your Pi and run the setup script:**  
    ```bash
    sudo apt install git -y
-   git --branch dev clone https://github.com/NinjaGeoff/coffee_bot.git
+   git clone --branch dev https://github.com/NinjaGeoff/coffee_bot.git
    cd coffee_bot
    git checkout dev  # Switch to dev branch
    chmod +x setup.sh
