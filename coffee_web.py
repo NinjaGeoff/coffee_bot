@@ -30,7 +30,7 @@ SERVO_FREQUENCY = 50  # Hz
 servo_config = {
     'rest_angle': 0,      # Starting/resting position (degrees)
     'active_angle': 45,   # Activated position (degrees)
-    'hold_time': 0.5,     # Time to hold in active position (seconds)
+    'hold_time': 0.25,     # Time to hold in active position (seconds)
 }
 
 # ============================================================================
@@ -160,8 +160,8 @@ def auto_brew():
     
     # Press power button
     press_power()
-    print("Waiting 5 seconds for coffee maker to power on...")
-    time.sleep(5)
+    print("Waiting 2 seconds for coffee maker to power on...")
+    time.sleep(2)
     
     # Press brew button
     press_brew()
@@ -206,42 +206,6 @@ def regenerate_topic_route():
         'new_topic': ntfy_topic,
         'message': 'Topic regenerated successfully! Scan the new QR code to resubscribe.'
     })
-
-
-@app.route('/test_servo/<int:servo_num>', methods=['POST'])
-def test_servo(servo_num):
-    """Test individual servo"""
-    try:
-        if servo_num == 1:
-            activate_servo(servo1, "Servo 1 (Power)")
-        elif servo_num == 2:
-            activate_servo(servo2, "Servo 2 (Brew)")
-        else:
-            return jsonify({'success': False, 'message': 'Invalid servo number'})
-        
-        return jsonify({'success': True, 'message': f'Servo {servo_num} test complete'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-
-@app.route('/update_config', methods=['POST'])
-def update_config():
-    """Update servo configuration"""
-    try:
-        data = request.json
-        servo_config['rest_angle'] = data['rest_angle']
-        servo_config['active_angle'] = data['active_angle']
-        servo_config['hold_time'] = data['hold_time']
-        
-        return jsonify({'success': True, 'message': 'Configuration updated'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-
-@app.route('/config')
-def get_config():
-    """Get current servo configuration"""
-    return jsonify(servo_config)
 
 
 # ============================================================================

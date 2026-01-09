@@ -173,13 +173,13 @@ coffee_bot/
 
 The default servo settings are:
 - **Rest Angle:** 0° (starting position)
-- **Active Angle:** 90° (button press position)
-- **Hold Time:** 2 seconds (how long to hold the button)
+- **Active Angle:** 45° (button press position)
+- **Hold Time:** .25 seconds (how long to hold the button)
 
 To adjust these:
-1. Use the web interface "Servo Configuration" section
-2. Or run `servo_test.py` for interactive testing
-3. Adjust angles in 5-10 degree increments until you find the optimal position for your setup
+1. SSH into your Pi
+2. Open coffee_web.py with the text editor of your choice
+3. Look for the "Servo Config" section and adjust the three defaults to suit your needs
 
 ## Safety Notes
 - The MG90S servos are rated for 4.8-6V and are powered from the Pi's 5V pins
