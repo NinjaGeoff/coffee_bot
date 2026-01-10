@@ -133,20 +133,6 @@
     </div>
 
     <script>
-        // Load current config on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            fetch('/config')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('rest_angle').value = data.rest_angle;
-                    document.getElementById('active_angle').value = data.active_angle;
-                    document.getElementById('hold_time').value = data.hold_time;
-                })
-                .catch(error => {
-                    console.error('Error loading config:', error);
-                });
-        });
-
         function showMessage(text, isError = false) {
             const msgDiv = document.getElementById('message');
             msgDiv.textContent = text;
@@ -160,14 +146,29 @@
         function pressButton(button) {
             fetch('/press/' + button)
                 .then(response => {
-                    if (response.ok) {
-                        showMessage('Command sent successfully!');
+                    // Parse JSON response
+                    return response.json().then(data => ({
+                        status: response.status,
+                        data: data
+                    }));
+                })
+                .then(({status, data}) => {
+                    if (status === 200 && data.success) {
+                        // Success
+                        showMessage(data.message);
+                    } else if (status === 429) {
+                        // Rate limit exceeded
+                        showMessage(`⏱️ ${data.message}`, true);
+                    } else if (status === 409) {
+                        // Operation in progress
+                        showMessage('⚙️ Another operation is running. Please wait.', true);
                     } else {
-                        showMessage('Error sending command', true);
+                        // Other error
+                        showMessage(data.message || 'Error sending command', true);
                     }
                 })
                 .catch(error => {
-                    showMessage('Error: ' + error, true);
+                    showMessage('Network error: ' + error, true);
                 });
         }
 

@@ -78,7 +78,28 @@ fi
 echo "--- Installing Python Libraries ---"
 $DIR/env/bin/pip install flask RPi.GPIO qrcode[pil] requests
 
-# 5. Create the Systemd Service
+# 5 Setup application folder structure
+echo "--- Setting Up Application Folder Structure ---"
+
+# Create required folders
+mkdir -p "$DIR/static"
+mkdir -p "$DIR/templates"
+
+# Verify critical files exist
+if [ ! -f "$DIR/coffee_web.py" ]; then
+    echo "ERROR: coffee_web.py not found!"
+    exit 1
+fi
+
+if [ ! -f "$DIR/templates/index.html" ]; then
+    echo "ERROR: templates/index.html not found!"
+    echo "Please ensure index.html is in the templates/ folder"
+    exit 1
+fi
+
+echo "Folder structure validated"
+
+# 6. Create the Systemd Service
 echo "--- Configuring Auto-Start Service ---"
 USER=$(whoami)
 sudo bash -c "cat > /etc/systemd/system/coffeebot.service" << EOF
@@ -96,7 +117,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# 6. Enable and Start
+# 7. Enable and Start
 echo "--- Starting Service ---"
 sudo systemctl daemon-reload
 sudo systemctl enable coffeebot.service

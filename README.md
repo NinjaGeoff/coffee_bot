@@ -92,10 +92,8 @@ sudo apt update && sudo apt upgrade -y
 
 The web interface allows you to:
 
-* **Auto Brew** - Automatically powers on the coffee maker, waits 5 seconds, then starts brewing
+* **Auto Brew** - Automatically powers on the coffee maker, waits 2 seconds, then starts brewing
 * **Manual Controls** - Press individual power and brew buttons
-* **Servo Testing** - Test each servo individually to verify connections and adjust angles
-* **Servo Configuration** - Adjust rest angle (default 0°), active angle (default 90°), and hold time (default 2 seconds)
 * **Mobile Alerts** - Scan QR code to receive push notifications when buttons are pressed
 
 ## Using Mobile Notifications
@@ -144,16 +142,6 @@ Stop service:
 sudo systemctl stop coffeebot.service
 ```
 
-## Updating the Code
-
-If you've made changes to the code on GitHub and want to update your Pi:
-
-```bash
-cd ~/coffee_bot
-git pull origin dev
-sudo systemctl restart coffeebot.service
-```
-
 ## Project Structure
 
 ```
@@ -165,7 +153,6 @@ coffee_bot/
 ├── static/                # Folder generates on first run
 │   └── ntfy_qr.png        # Auto-generated QR code
 ├── ntfy_topic.txt         # Auto-generated topic file (do not commit)
-├── servo_test.py          # Interactive servo testing script
 └── README.md
 ```
 
@@ -174,18 +161,26 @@ coffee_bot/
 The default servo settings are:
 - **Rest Angle:** 0° (starting position)
 - **Active Angle:** 45° (button press position)
-- **Hold Time:** .25 seconds (how long to hold the button)
+- **Move Time:** 0.3 seconds (time for servo to complete movement)
+- **Hold Time:** 0.25 seconds (how long to hold the button pressed)
+
+**Total button press time = (move_time × 2) + hold_time = 0.85 seconds**
 
 To adjust these:
 1. SSH into your Pi
-2. Open coffee_web.py with the text editor of your choice
-3. Look for the "Servo Config" section and adjust the three defaults to suit your needs
+2. Edit `coffee_web.py` and modify the `servo_config` dictionary values
+3. Restart the service: `sudo systemctl restart coffeebot.service`
+
+### Tuning Tips:
+- If servo doesn't reach full position, increase `move_time`
+- If button press is too slow, decrease `move_time` and `hold_time`
+- MG90S servos typically move 60° in 0.1s, so moving 45° should take ~0.075s minimum. Look for the "Servo Config" section and adjust the three defaults to suit your needs
 
 ## Safety Notes
 - The MG90S servos are rated for 4.8-6V and are powered from the Pi's 5V pins
 - The Motor Driver HAT is used only for power regulation (9V to 5V for the Pi)
-- Each servo can draw up to 1A under load - if using both servos simultaneously under heavy load, consider an external 5V power supply
-- Always disconnect power when making hardware changes
+- Each servo typically draw ~100-300mA under normal load, peaking at ~500-700mA
+- **Always disconnect power when making hardware changes**
 
 ## Troubleshooting
 
@@ -202,14 +197,26 @@ To adjust these:
 **Servos not moving:**
 - Verify GPIO connections match the pinout table
 - Check that PWM is enabled on your Raspberry Pi
-- Test individual servos using the web interface "Test Servo" buttons
+- Test individual servos using the web interface "Power" and "Brew" buttons buttons
 - Ensure 9V power supply is connected to the Motor Driver HAT VIN
 - Run `servo_test.py` for interactive debugging
 
 **Servos moving too much/too little:**
-- Adjust the "Active Angle" setting in the web interface
-- Try values between 10-180 degrees to find the optimal range
-- Adjust "Hold Time" if buttons need to be pressed longer
+- The default configuration uses "extended range" pulse widths (0.5-2.5ms)
+- If your servos don't respond correctly, try standard range (1.0-2.0ms)
+- Edit `coffee_web.py` and modify `servo_pulse_config`:
+```python
+  servo_pulse_config = {
+      'min_pulse_ms': 1.0,   # Standard minimum
+      'max_pulse_ms': 2.0,   # Standard maximum
+  }
+```
+
+**Servos jittering or buzzing at rest:**
+- This usually means the pulse width is outside the servo's range
+- Try reducing the pulse width range closer to standard (1.0-2.0ms)
+- Adjust `rest_angle` to 5° or 10° instead of 0°
+- Ensure `active_angle` isn't too extreme (try 45-90°)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -221,3 +228,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Add a physical button for manual activation
 - Design an enclosure for the hardware
 - Add a third servo for different brew sizes (if coffee maker supports it)
+
+## Future FUTURE Plans / HUGE scope creep
+- Add support for the RPi camera so get visuals on if the coffee maker is done brewing
