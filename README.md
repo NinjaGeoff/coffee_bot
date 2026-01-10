@@ -86,7 +86,7 @@ sudo apt update && sudo apt upgrade -y
    - The setup script will automatically configure port forwarding from port 80 to port 5000 without prompts using iptables-persistent.
 
 2. **Access the web interface at:**  
-   `http://coffee-bot/` or `http://<your-pi-ip>/`
+   `http://<hostname>/` or `http://<your-pi-ip>/`
 
 ## Using the Web Interface
 
