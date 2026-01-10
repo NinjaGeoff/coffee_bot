@@ -33,7 +33,6 @@
         .brew { background-color: #2ecc71; }
         .auto { background-color: #9b59b6; font-size: 24px; padding: 25px 50px; }
         .regenerate { background-color: #3498db; padding: 10px 20px; font-size: 14px; }
-        .update-btn { background-color: #27ae60; padding: 12px 30px; font-size: 16px; }
         
         .topic-display { 
             background: #fff; 
@@ -105,7 +104,7 @@
         <div class="section">
             <h3>Quick Actions</h3>
             <button class="btn auto" onclick="pressButton('auto')">☕ Auto Brew</button>
-            <p style="color: #666; font-size: 14px;">Powers on, waits 2 seconds, then starts brewing</p>
+            <p style="color: #666; font-size: 14px;">Powers on, waits {{ power_on_delay }} seconds, then starts brewing</p>
         </div>
         
         <div class="separator"></div>

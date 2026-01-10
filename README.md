@@ -199,7 +199,6 @@ To adjust these:
 - Check that PWM is enabled on your Raspberry Pi
 - Test individual servos using the web interface "Power" and "Brew" buttons buttons
 - Ensure 9V power supply is connected to the Motor Driver HAT VIN
-- Run `servo_test.py` for interactive debugging
 
 **Servos moving too much/too little:**
 - The default configuration uses "extended range" pulse widths (0.5-2.5ms)

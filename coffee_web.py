@@ -53,6 +53,11 @@ servo_config = {
     'hold_time': 0.25,     # Time to hold in active position (seconds)
 }
 
+# Set the delay between powering on and brewing for the auto brew sequence
+auto_brew_config = {
+    'power_on_delay': 2.0,  # Seconds to wait after power on
+}
+
 # ============================================================================
 # NTFY CONFIGURATION
 # ============================================================================
@@ -82,30 +87,37 @@ def get_ntfy_topic():
 def regenerate_topic():
     """Generate a new random topic and save it"""
     new_topic = f"coffeebot-{secrets.token_urlsafe(16)}"
-    with open(NTFY_TOPIC_FILE, 'w') as f:
-        f.write(new_topic)
-    generate_qr_code(new_topic)
+    try:
+        with open(NTFY_TOPIC_FILE, 'w') as f:
+            f.write(new_topic)
+        generate_qr_code(new_topic)
+    except IOError as e:
+        print(f"Error saving topic: {e}")
     return new_topic
 
 def generate_qr_code(topic):
     """Generate QR code for ntfy topic"""
-    os.makedirs(STATIC_FOLDER, exist_ok=True)
-    ntfy_url = f"https://ntfy.sh/{topic}"
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(ntfy_url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    img.save(QR_CODE_PATH)
+    try:
+        os.makedirs(STATIC_FOLDER, exist_ok=True)
+        ntfy_url = f"ntfy://ntfy.sh/{topic}"
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(ntfy_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        img.save(QR_CODE_PATH)
+    except Exception as e:
+        print(f"Error generating QR code: {e}")
 
 def send_ntfy_notification(message):
     """Send notification to ntfy topic"""
     try:
         import requests
-        topic = get_ntfy_topic()  # ← Changed from using global variable
+        topic = get_ntfy_topic()
         requests.post(
             f"https://ntfy.sh/{topic}",
             data=message.encode('utf-8'),
-            headers={"Title": "Coffee Bot"}
+            headers={"Title": "Coffee Bot"},
+            timeout=5  # Add timeout
         )
     except Exception as e:
         print(f"Failed to send notification: {e}")
@@ -171,15 +183,22 @@ def setup_servos():
     GPIO.setup(SERVO_1_PIN, GPIO.OUT)
     GPIO.setup(SERVO_2_PIN, GPIO.OUT)
     
+    # Calculate the rest position duty cycle
+    rest_duty = angle_to_duty_cycle(servo_config['rest_angle'])
+    
     servo1 = GPIO.PWM(SERVO_1_PIN, SERVO_FREQUENCY)
     servo2 = GPIO.PWM(SERVO_2_PIN, SERVO_FREQUENCY)
     
-    servo1.start(0)
-    servo2.start(0)
+    # Start at rest position instead of 0
+    servo1.start(rest_duty)
+    servo2.start(rest_duty)
     
-    # Initialize to rest position
-    move_servo(servo1, servo_config['rest_angle'])
-    move_servo(servo2, servo_config['rest_angle'])
+    # Give servos time to settle
+    time.sleep(0.5)
+    
+    # Turn off PWM signal after reaching rest position
+    servo1.ChangeDutyCycle(0)
+    servo2.ChangeDutyCycle(0)
 
 
 def angle_to_duty_cycle(angle):
@@ -260,8 +279,8 @@ def auto_brew():
     
     # Press power button
     press_power()
-    print("Waiting 2 seconds for coffee maker to power on...")
-    time.sleep(2)
+    print("Waiting {auto_brew_config['power_on_delay']} seconds for coffee maker to power on...")
+    time.sleep(auto_brew_config['power_on_delay'])
     
     # Press brew button
     press_brew()
@@ -277,7 +296,11 @@ def auto_brew():
 @app.route('/')
 def index():
     """Main page"""
-    return render_template('index.html', ntfy_topic=get_ntfy_topic())
+    delay = auto_brew_config['power_on_delay']
+    delay_text = int(delay) if delay == int(delay) else delay
+    return render_template('index.html', 
+                          ntfy_topic=get_ntfy_topic(),
+                          power_on_delay=delay_text)
 
 
 @app.route('/press/<button>')
@@ -351,12 +374,14 @@ def press_button(button):
 def regenerate_topic_route():
     """Generate a new ntfy topic"""
     global ntfy_topic
-    ntfy_topic = regenerate_topic()
-    return jsonify({
-        'success': True,
-        'new_topic': ntfy_topic,
-        'message': 'Topic regenerated successfully! Scan the new QR code to resubscribe.'
-    })
+    # Add a lock here
+    with rate_limit_lock:  # Reuse existing lock or create a new one
+        ntfy_topic = regenerate_topic()
+        return jsonify({
+            'success': True,
+            'new_topic': ntfy_topic,
+            'message': 'Topic regenerated successfully! Scan the new QR code to resubscribe.'
+        })
 
 
 # ============================================================================
