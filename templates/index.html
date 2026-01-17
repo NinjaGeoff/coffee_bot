@@ -4,16 +4,196 @@
     <title>Coffee Bot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f1ea; }
-        .btn { padding: 20px 40px; font-size: 20px; margin: 10px; cursor: pointer; border-radius: 8px; border: none; color: white; }
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            background: #f4f1ea;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .btn { 
+            padding: 20px 40px; 
+            font-size: 20px; 
+            margin: 10px; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            border: none; 
+            color: white;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
         .power { background-color: #e74c3c; }
         .brew { background-color: #2ecc71; }
+        .auto { background-color: #9b59b6; font-size: 24px; padding: 25px 50px; }
+        .regenerate { background-color: #3498db; padding: 10px 20px; font-size: 14px; }
+        
+        .topic-display { 
+            background: #fff; 
+            padding: 10px; 
+            margin: 20px auto; 
+            max-width: 600px; 
+            border-radius: 5px; 
+            word-break: break-all; 
+        }
+        .message { 
+            padding: 10px; 
+            margin: 10px auto; 
+            max-width: 600px; 
+            border-radius: 5px; 
+            display: none; 
+        }
+        .message.success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .message.error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .separator { 
+            margin: 30px 0; 
+            border-top: 2px dashed #ccc; 
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .section h3 {
+            color: #6F4E37;
+            margin-top: 0;
+        }
+        .control-group {
+            margin: 15px 0;
+            text-align: left;
+            display: inline-block;
+            width: 100%;
+            max-width: 400px;
+        }
+        .control-group label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+        }
+        .control-group input {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100px;
+        }
     </style>
 </head>
 <body>
-    <h1>☕ Coffee Bot Control</h1>
-    <button class="btn power" onclick="fetch('/press/power')">Power Toggle</button>
-    <br>
-    <button class="btn brew" onclick="fetch('/press/brew')">Start Brewing</button>
+    <div class="container">
+        <h1>☕ Coffee Bot Control</h1>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="section">
+            <h3>Quick Actions</h3>
+            <button class="btn auto" onclick="pressButton('auto')">☕ Auto Brew</button>
+            <p style="color: #666; font-size: 14px;">Powers on, waits {{ power_on_delay }} seconds, then starts brewing</p>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="section">
+            <h3>Manual Controls</h3>
+            <button class="btn power" onclick="pressButton('power')">Power Toggle</button>
+            <br>
+            <button class="btn brew" onclick="pressButton('brew')">Start Brewing</button>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="section ntfy-section">
+            <h3>Mobile Alerts</h3>
+            <div class="topic-display">
+                <strong>Current Topic:</strong><br>
+                <code id="topic-name">{{ ntfy_topic }}</code>
+            </div>
+            <p>Scan to subscribe via ntfy app:</p>
+            <img id="qr-code" src="{{ url_for('static', filename='ntfy_qr.png') }}?t={{ ntfy_topic }}" alt="ntfy QR Code" style="width: 150px;">
+            <br><br>
+            <button class="btn regenerate" onclick="regenerateTopic()">🔄 Regenerate Topic</button>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(text, isError = false) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = 'message ' + (isError ? 'error' : 'success');
+            msgDiv.style.display = 'block';
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function pressButton(button) {
+            fetch('/press/' + button)
+                .then(response => {
+                    // Parse JSON response
+                    return response.json().then(data => ({
+                        status: response.status,
+                        data: data
+                    }));
+                })
+                .then(({status, data}) => {
+                    if (status === 200 && data.success) {
+                        // Success
+                        showMessage(data.message);
+                    } else if (status === 429) {
+                        // Rate limit exceeded
+                        showMessage(`⏱️ ${data.message}`, true);
+                    } else if (status === 409) {
+                        // Operation in progress
+                        showMessage('⚙️ Another operation is running. Please wait.', true);
+                    } else {
+                        // Other error
+                        showMessage(data.message || 'Error sending command', true);
+                    }
+                })
+                .catch(error => {
+                    showMessage('Network error: ' + error, true);
+                });
+        }
+
+        function regenerateTopic() {
+            if (!confirm('This will generate a new topic. All previous subscribers will need to scan the new QR code. Continue?')) {
+                return;
+            }
+            
+            fetch('/regenerate_topic', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update topic display
+                        document.getElementById('topic-name').textContent = data.new_topic;
+                        
+                        // Force reload QR code image with cache busting
+                        const qrImg = document.getElementById('qr-code');
+                        qrImg.src = '/static/ntfy_qr.png?t=' + Date.now();
+                        
+                        showMessage(data.message);
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error regenerating topic: ' + error, true);
+                });
+        }
+    </script>
 </body>
 </html>
