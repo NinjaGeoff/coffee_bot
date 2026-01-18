@@ -71,6 +71,7 @@ See [Getting Started](getting-started) for detailed setup instructions.
 - [**Usage Guide**](usage-guide) - Web interface and mobile notifications
 - [**Configuration**](configuration) - Servo tuning and customization
 - [**Troubleshooting**](troubleshooting-advanced) - Advanced debugging
+- [**Automatic OS Security Updates**](automatic-updates) - Set up automatic security updates for PiOS (optional, but recommeded for the security conscious)
 
 ### Reference
 

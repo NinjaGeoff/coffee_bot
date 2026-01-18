@@ -52,8 +52,8 @@ The **☕ Auto Brew** button executes a complete brewing sequence:
 ### Button Feedback
 
 After pressing any button, you'll see a message:
-- ✅ **Green message:** Operation successful
-- ❌ **Red message:** Error or rate limit hit
+- **Green message:** Operation successful
+- **Red message:** Error or rate limit hit
 
 ### Rate Limiting
 

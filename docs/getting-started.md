@@ -174,10 +174,10 @@ Follow the [Hardware Setup Guide](hardware-setup) to:
 
 ### Important Hardware Notes
 
-- ⚠️ **Disconnect all power** before making hardware changes
-- 🔌 **External power is required** - servos cannot run from Pi's 5V pins
-- 📐 **Servo orientation matters** - position servos so they rotate toward buttons
-- 🔧 **Test range before mounting** - verify servos can reach buttons
+- **Disconnect all power** before making hardware changes
+- **External power is required** - servos cannot run from Pi's 5V pins
+- **Servo orientation matters** - position servos so they rotate toward buttons
+- **Test range before mounting** - verify servos can reach buttons
 
 ## Step 5: Configuration and Testing
 
@@ -223,29 +223,8 @@ Full details in [Usage Guide](usage-guide).
 
 ## Step 6: Final Setup
 
-### Secure Your System
+### Configure Auto-Updates 
 
-2. **Update regularly:**
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   ```
-
-### Optional Optimizations
-
-1. **Fix SSH performance issues** (if experiencing slowness):
-   See [Troubleshooting: Network Issues](troubleshooting-advanced#network-issues)
-
-2. **Reduce log file size:**
-   ```bash
-   # Add log rotation (already configured by setup script)
-   sudo cat /etc/logrotate.d/coffeebot
-   ```
-
-3. **Create a backup:**
-   ```bash
-   # Backup ntfy topic
-   cp ~/coffee_bot/ntfy_topic.txt ~/ntfy_topic_backup.txt
-   ```
 
 ## Common Setup Issues
 
