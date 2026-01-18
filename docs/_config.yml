@@ -1,6 +1,7 @@
 title: Coffee Bot
 description: Raspberry Pi Coffee Maker Automation with Servo Control
-theme: jekyll-theme-cayman
+theme: just-the-docs
+color_scheme: dark
 
 # URLs
 url: "https://ninjageoff.github.io"
@@ -27,6 +28,7 @@ plugins:
   - jekyll-optional-front-matter
   - jekyll-readme-index
   - jekyll-titles-from-headings
+  - jekyll-remote-theme
 
 # Plugin configurations
 relative_links:
