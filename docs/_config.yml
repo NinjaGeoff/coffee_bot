@@ -1,6 +1,6 @@
 title: Coffee Bot
 description: Raspberry Pi Coffee Maker Automation with Servo Control
-theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs
 color_scheme: dark
 
 # URLs
