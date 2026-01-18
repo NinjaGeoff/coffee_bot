@@ -35,5 +35,3 @@
 ### Advanced Features
 - **Add support for RPi camera to monitor brewing status**
   - Install picamera2, capture images on button press or interval, serve via `/camera` route or embed in web UI
-- **Update/expand timezone setting for more than just USA timezones**
-  - ~~Create a separate `set_timezone.sh` script~~ with full timezone list from `timedatectl list-timezones`, call from setup.sh
