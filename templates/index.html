@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coffee Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>☕ Coffee Bot Control</h1>
+
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <button class="tab-button active" onclick="openTab(event, 'controls')">🎛️ Controls</button>
+            <button class="tab-button" onclick="openTab(event, 'alerts')">📱 Mobile Alerts</button>
+            <button class="tab-button" onclick="openTab(event, 'documentation')">📚 Documentation</button>
+        </div>
+
+        <!-- Controls Tab -->
+        <div id="controls" class="tab-content active">
+            <div class="section">
+                <h3>Quick Actions</h3>
+                <div class="button-row">
+                    <button class="btn auto" onclick="pressButton('auto')">☕ Auto Brew</button>
+                </div>
+                <p style="color: #666; font-size: 14px;">Powers on, waits {{ power_on_delay }} seconds, then starts brewing</p>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="section">
+                <h3>Manual Controls</h3>
+                <div class="button-row">
+                    <button class="btn power" onclick="pressButton('power')">⚡ Power Toggle</button>
+                    <button class="btn brew" onclick="pressButton('brew')">☕ Start Brewing</button>
+                </div>
+            </div>
+
+            <!-- Message display moved here -->
+            <div id="message" class="message"></div>
+        </div>
+
+        <!-- Mobile Alerts Tab -->
+        <div id="alerts" class="tab-content">
+            <div class="section ntfy-section">
+                <h3>Mobile Alerts</h3>
+                <div class="topic-display">
+                    <strong>Current Topic:</strong><br>
+                    <code id="topic-name">{{ ntfy_topic }}</code>
+                </div>
+                <p>Scan to subscribe via ntfy app:</p>
+                <img id="qr-code" src="{{ url_for('static', filename='ntfy_qr.png') }}?t={{ ntfy_topic }}" alt="ntfy QR Code" style="width: 200px; height: 200px;">
+                <br><br>
+                <button class="btn regenerate" onclick="regenerateTopic()">🔄 Regenerate Topic</button>
+                <div class="info-box">
+                    <p><strong>How to use:</strong></p>
+                    <ol style="text-align: left; display: inline-block;">
+                        <li>Install the <a href="https://ntfy.sh" target="_blank">ntfy app</a> on your phone</li>
+                        <li>Scan the QR code above</li>
+                        <li>Receive notifications when buttons are pressed!</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Tab -->
+        <div id="documentation" class="tab-content">
+            <div class="section">
+                <h3>📚 Documentation & Resources</h3>
+                
+                <div class="doc-link-container">
+                    <div class="doc-link-card">
+                        <h4>💻 GitHub Repository</h4>
+                        <p>Source code, issues, and contributing</p>
+                        <a href="https://github.com/NinjaGeoff/coffee_bot" target="_blank" class="doc-button">
+                            View on GitHub
+                        </a>
+                    </div>
+                    <div class="doc-link-card">
+                        <h4>📖 GitHub Pages Documentation</h4>
+                        <p>Complete setup guides, troubleshooting, and hardware information</p>
+                        <a href="https://ninjageoff.github.io/coffee_bot/" target="_blank" class="doc-button">
+                            View Documentation
+                        </a>
+                    </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="quick-links">
+                    <h4>Quick Links</h4>
+                    <ul style="text-align: left; display: inline-block; line-height: 2;">
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/hardware-setup" target="_blank">Hardware Setup Guide</a></li>
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/pi-imaging-guide" target="_blank">Raspberry Pi Imaging Guide</a></li>
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/parts-list" target="_blank">Parts List</a></li>
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/troubleshooting-advanced" target="_blank">Advanced Troubleshooting</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            const tabContent = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContent.length; i++) {
+                tabContent[i].classList.remove('active');
+            }
+            
+            // Remove active class from all buttons
+            const tabButtons = document.getElementsByClassName('tab-button');
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+            
+            // Show current tab and mark button as active
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        function showMessage(text, isError = false) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = 'message ' + (isError ? 'error' : 'success');
+            msgDiv.style.display = 'block';
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function pressButton(button) {
+            fetch('/press/' + button)
+                .then(response => {
+                    return response.json().then(data => ({
+                        status: response.status,
+                        data: data
+                    }));
+                })
+                .then(({status, data}) => {
+                    if (status === 200 && data.success) {
+                        showMessage(data.message);
+                    } else if (status === 429) {
+                        showMessage(`⏱️ ${data.message}`, true);
+                    } else if (status === 409) {
+                        showMessage('⚙️ Another operation is running. Please wait.', true);
+                    } else {
+                        showMessage(data.message || 'Error sending command', true);
+                    }
+                })
+                .catch(error => {
+                    showMessage('Network error: ' + error, true);
+                });
+        }
+
+        function regenerateTopic() {
+            if (!confirm('This will generate a new topic. All previous subscribers will need to scan the new QR code. Continue?')) {
+                return;
+            }
+            
+            fetch('/regenerate_topic', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('topic-name').textContent = data.new_topic;
+                        const qrImg = document.getElementById('qr-code');
+                        qrImg.src = '/static/ntfy_qr.png?t=' + Date.now();
+                        showMessage(data.message);
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error regenerating topic: ' + error, true);
+                });
+        }
+    </script>
+</body>
+</html>
