@@ -72,11 +72,11 @@ sudo apt update && sudo apt upgrade -y
 ## Getting Started
 
 
-1. **Download the install script and runs it**
+1. **Download the install script and run it**
 
-```
-curl -sSL https://raw.githubusercontent.com/NinjaGeoff/coffee_bot/main/install.sh | bash
-```
+   ```
+   curl -sSL https://raw.githubusercontent.com/NinjaGeoff/coffee_bot/main/install.sh | bash
+   ```
 - change to /dev/install.sh to pull the dev branch.
 - During setup it will ask you to confirm your timezone and will offer to adjust it if it's incorrect
 - The setup script will automatically:
