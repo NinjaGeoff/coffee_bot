@@ -240,6 +240,93 @@ body {
     font-weight: 600;
 }
 
+/* Documentation Tab Styles */
+.doc-link-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0;
+}
+
+.doc-link-card {
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 25px;
+    width: 300px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.doc-link-card:hover {
+    border-color: #6F4E37;
+    box-shadow: 0 4px 12px rgba(111, 78, 55, 0.2);
+    transform: translateY(-2px);
+}
+
+.doc-link-card h4 {
+    color: #6F4E37;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.doc-link-card p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.doc-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #6F4E37;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.doc-button:hover {
+    background: #8B6F47;
+    transform: scale(1.05);
+}
+
+.quick-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.quick-links h4 {
+    color: #6F4E37;
+    margin-bottom: 15px;
+}
+
+.quick-links ul {
+    list-style: none;
+    padding: 0;
+}
+
+.quick-links li {
+    margin: 10px 0;
+}
+
+.quick-links a {
+    color: #6F4E37;
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px dotted #6F4E37;
+    transition: all 0.2s;
+}
+
+.quick-links a:hover {
+    color: #8B6F47;
+    border-bottom: 1px solid #8B6F47;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .button-row {
@@ -259,5 +346,15 @@ body {
     .tab-button {
         padding: 12px 20px;
         font-size: 14px;
+    }
+
+    .doc-link-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .doc-link-card {
+        width: 100%;
+        max-width: 350px;
     }
 }

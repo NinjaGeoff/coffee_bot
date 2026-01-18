@@ -9,17 +9,12 @@
 <body>
     <div class="container">
         <h1>☕ Coffee Bot Control</h1>
-        
-        <!-- Navigation -->
-        <div class="nav-bar">
-            <a href="/docs/readme" class="nav-link">📄 View README</a>
-            <a href="/docs/" class="nav-link">📚 Documentation</a>
-        </div>
 
         <!-- Tab Navigation -->
         <div class="tab-container">
             <button class="tab-button active" onclick="openTab(event, 'controls')">🎛️ Controls</button>
             <button class="tab-button" onclick="openTab(event, 'alerts')">📱 Mobile Alerts</button>
+            <button class="tab-button" onclick="openTab(event, 'documentation')">📚 Documentation</button>
         </div>
 
         <!-- Controls Tab -->
@@ -65,6 +60,43 @@
                         <li>Scan the QR code above</li>
                         <li>Receive notifications when buttons are pressed!</li>
                     </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Tab -->
+        <div id="documentation" class="tab-content">
+            <div class="section">
+                <h3>📚 Documentation & Resources</h3>
+                
+                <div class="doc-link-container">
+                    <div class="doc-link-card">
+                        <h4>📖 GitHub Pages Documentation</h4>
+                        <p>Complete setup guides, troubleshooting, and hardware information</p>
+                        <a href="https://ninjageoff.github.io/coffee_bot/" target="_blank" class="doc-button">
+                            View Documentation
+                        </a>
+                    </div>
+
+                    <div class="doc-link-card">
+                        <h4>💻 GitHub Repository</h4>
+                        <p>Source code, issues, and contributing</p>
+                        <a href="https://github.com/NinjaGeoff/coffee_bot" target="_blank" class="doc-button">
+                            View on GitHub
+                        </a>
+                    </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="quick-links">
+                    <h4>Quick Links</h4>
+                    <ul style="text-align: left; display: inline-block; line-height: 2;">
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/hardware-setup" target="_blank">Hardware Setup Guide</a></li>
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/pi-imaging-guide" target="_blank">Raspberry Pi Imaging Guide</a></li>
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/parts-list" target="_blank">Parts List</a></li>
+                        <li><a href="https://ninjageoff.github.io/coffee_bot/troubleshooting-advanced" target="_blank">Advanced Troubleshooting</a></li>
+                    </ul>
                 </div>
             </div>
         </div>

@@ -14,6 +14,15 @@ else
     echo "WARNING: set_timezone.sh not found, skipping timezone setup."
 fi
 
+# Remove docs folder (not needed on Pi, only used for GitHub Pages)
+echo "--- Removing documentation folder (not needed on Pi) ---"
+if [ -d "$DIR/docs" ]; then
+    rm -rf "$DIR/docs"
+    echo "Removed /docs folder"
+else
+    echo "/docs folder not found (already removed or not present)"
+fi
+
 echo "-----------------------------------------------"
 echo "COFFEE BOT SYSTEM SETUP - PCA9685 VERSION"
 echo "-----------------------------------------------"
@@ -74,16 +83,6 @@ if [ ! -f "$DIR/templates/index.html" ]; then
 fi
 
 echo "Folder structure validated"
-
-# Create symlink for README.md in the docs folder
-echo "--- Linking README to Documentation ---"
-if [ -f "$DIR/README.md" ]; then
-    # -s: symbolic, -f: force (replaces if exists), -n: treat link as a file
-    ln -sfn "$DIR/README.md" "$DIR/docs/readme.md"
-    echo "Symlink created: /docs/readme.md -> /README.md"
-else
-    echo "WARNING: README.md not found, skipping symlink."
-fi
 
 # Set secure permissions on ntfy topic file if it exists
 if [ -f "$DIR/ntfy_topic.txt" ]; then
