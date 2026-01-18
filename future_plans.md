@@ -1,6 +1,7 @@
 ## Future Plans
 
 ### Documentation Updates
+- Overhaul contents of /docs so it's more streamlined and usable with GitHub Actions to create a better Pages thingamabob at [https://ninjageoff.github.io/coffee_bot/](https://ninjageoff.github.io/coffee_bot/)
 - Fix Project Structure as it's behind by a few major versions but I can't be bothered right now
 - Determine better setup/install method so we don't HAVE to install Git on the Pi
 
