@@ -299,6 +299,41 @@ hostname -I
 # Try accessing via IP: http://192.168.1.xxx/
 ```
 
+**6. SSH is VERY slow**
+
+An odd bug/feature I found on the Pi Zero 2W, that I didn't see when doing the initial development on my Zero W or 3 B+, is pretty bad SSH performance that made SSH downright unusable at times. The easiest thing to check is that your Pi has a strong enough Wi-Fi signal. You can check the signal once you're SSH'd in (yeah, the irony isn't lost on me) with the command ```iwconfig wlan0 | grep Signal```
+- -30 to -60 dBm is good and likely isn't the culprit
+- -60 to -70 dBm = Fair (may cause sluggishness)
+- -70 dBm or worse = Poor (most likely causing issues)
+
+If your Wi-Fi signal is in that -30 to -60 dBm, or if getting it into that range by moving your Pi to a better location, and you're still getting bad sluggishness, there are a few optimizations we can make by editing ```sshd_config```
+
+```bash
+# Disable DNS lookup in SSH (prevents timeout waiting for reverse DNS)
+sudo sed -i '/^#\?UseDNS/c\UseDNS no' /etc/ssh/sshd_config
+
+# Disable GSSAPI authentication (skips enterprise Kerberos authentication attempt)
+sudo sed -i '/^#\?GSSAPIAuthentication/c\GSSAPIAuthentication no' /etc/ssh/sshd_config
+
+# Disable GSSAPI credential cleanup (related to above)
+sudo sed -i '/^#\?GSSAPICleanupCredentials/c\GSSAPICleanupCredentials no' /etc/ssh/sshd_config
+
+# Restart SSH to apply changes
+sudo systemctl restart ssh
+
+# Restart the Pi for good measure
+sudo reboot
+```
+
+**What these settings do:**
+- **UseDNS no** - Disables reverse DNS lookups on SSH connections. The SSH daemon normally tries to look up the hostname of connecting clients, which can cause 5-30 second delays when the lookup times out (common on home networks).
+- **GSSAPIAuthentication no** - Disables Kerberos/enterprise authentication attempts. This is only needed in corporate environments with Active Directory. Disabling it eliminates another authentication timeout.
+- **GSSAPICleanupCredentials no** - Disables cleanup of GSSAPI credentials, which aren't being used anyway when GSSAPI is disabled.
+
+These changes only affect SSH connection speed and should have no impact on security for home use. You should notice immediate improvement in terminal responsiveness after running these commands and restarting SSH.
+
+**Note:** You should only need to run these commands once. The settings persist across reboots.
+
 ### NTFY Notifications Not Working
 
 **1. Check internet connectivity:**

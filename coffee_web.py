@@ -225,17 +225,29 @@ def activate_servo(channel, servo_name="Servo"):
         logger.error(f"ERROR during {servo_name} operation: {e}")
         raise
 
-def press_power():
-    """Press the power button"""
+def press_power(notify=True):
+    """
+    Press the power button
+    
+    Args:
+        notify: Send ntfy notification (default: True)
+    """
     logger.info("Pressing POWER button")
     activate_servo(SERVO_POWER_CHANNEL, "Power Button")
-    send_ntfy_notification("☕ Power button pressed")
+    if notify:
+        send_ntfy_notification("☕ Power button pressed")
 
-def press_brew():
-    """Press the brew button"""
+def press_brew(notify=True):
+    """
+    Press the brew button
+    
+    Args:
+        notify: Send ntfy notification (default: True)
+    """
     logger.info("Pressing BREW button")
     activate_servo(SERVO_BREW_CHANNEL, "Brew Button")
-    send_ntfy_notification("☕ Brew button pressed")
+    if notify:
+        send_ntfy_notification("☕ Brew button pressed")
 
 def auto_brew():
     """Automated brew sequence: Power on, wait, then brew"""
@@ -243,18 +255,17 @@ def auto_brew():
     logger.info("AUTO BREW SEQUENCE STARTED")
     logger.info("=" * 50)
     
-    send_ntfy_notification("☕ Starting auto brew sequence...")
+    send_ntfy_notification("☕ Coffee maker powered on and brew started!")
     
-    # Press power button
-    press_power()
+    # Press power button (no notification)
+    press_power(notify=False)
     logger.info(f"Waiting {auto_brew_config['power_on_delay']} seconds for coffee maker to power on...")
     time.sleep(auto_brew_config['power_on_delay'])
     
-    # Press brew button
-    press_brew()
+    # Press brew button (no notification)
+    press_brew(notify=False)
     
     logger.info("Auto brew sequence complete!")
-    send_ntfy_notification("✓ Auto brew sequence complete!")
 
 # ============================================================================
 # WEB ROUTES

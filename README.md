@@ -55,16 +55,8 @@ The Waveshare Servo Driver HAT mounts directly onto the Raspberry Pi's 40-pin GP
 
 This project uses **Raspberry Pi OS Lite** (32-bit or 64-bit) to keep the system lightweight. It runs headless, so no monitor, mouse, or keyboard will need to be hooked up. We'll use SSH to connect to and configure the Pi.
 
-1. **Download Raspberry Pi Imager:** Get it from [raspberrypi.com/software](https://www.raspberrypi.com/software/). Once installed, run it.
-2. **Select OS:** Choose `Raspberry Pi OS (Other)` → `Raspberry Pi OS Lite (32-bit)` or `Raspberry Pi OS Lite (64-bit)`.
-3. **Select Storage:** Choose your microSD card.
-4. **Edit Settings (The Gear Icon):**
-   - **Hostname:** Set to `coffee-bot` (or your choice).
-   - **SSH:** Enable SSH and use password authentication or public key.
-   - **User:** Set a username (e.g., `pi`) and password if not using a public key.
-   - **Wi-Fi:** Enter your SSID and Password. Set the Wireless LAN country.
-5. **Write:** Click "Write" and wait for it to finish.
-6. **Boot:** Insert the card into the Pi and power it on. It will take 1-2 minutes to perform the first boot and connect to your network.
+## Imaging your Raspberry Pi
+Review [The Pi Imaging Guide](/docs/pi-imaging-guide.md) in this project for an in-depth guide.
 
 ### Accessing the Pi and Running Updates
 Once the Pi is on your network, open your terminal and run:  
@@ -104,7 +96,16 @@ sudo apt update && sudo apt upgrade -y
 3. **Access the web interface at:**  
    `http://coffee-bot/` or `http://<your-pi-ip>/`
 
-4. **In-depth Documentation:**
+### Optional: SSH Performance Issues
+
+An odd bug/feature I found on the Pi Zero 2W, that I didn't see when doing the initial development on my Zero W or 3 B+, is pretty bad SSH performance that made SSH downright unusable at times. The easiest thing to check is that your Pi has a strong enough Wi-Fi signal. You can check the signal once you're SSH'd in (yeah, the irony isn't lost on me) with the command ```iwconfig wlan0 | grep Signal```
+- -30 to -60 dBm is good and likely isn't the culprit
+- -60 to -70 dBm = Fair (may cause sluggishness)
+- -70 dBm or worse = Poor (most likely causing issues)
+
+If your Wi-Fi signal is outside of that -30 to -60 dBm range, try moving it to a location closer to your wireless access point/router to see if it improves performance. If SSH is still awful after that, see #6 in [Advanced Troubleshooting | Network Issues](/docs/troubleshooting-advanced#network-issues).
+
+**More in-depth Documentation:**
   - [Hardware Setup & Wiring](docs/hardware-setup.md)
   - [Raspberry Pi Imaging Guide](docs/pi-imaging-guide.md)
   - [Advanced Troubleshooting](docs/troubleshooting-advanced.md)
