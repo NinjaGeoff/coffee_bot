@@ -79,8 +79,7 @@ curl -sSL https://raw.githubusercontent.com/NinjaGeoff/coffee_bot/main/install.s
 ```
    - change to /dev/install.sh to pull the dev branch.
 
-~~
-1. **Clone the repo to your Pi and run the setup script:**  
+~~ 1. **Clone the repo to your Pi and run the setup script:**  
    ```bash
    sudo apt install git -y
    git clone https://github.com/NinjaGeoff/coffee_bot.git #add "--branch dev" between clone the the URL to pull dev branch
@@ -94,8 +93,7 @@ curl -sSL https://raw.githubusercontent.com/NinjaGeoff/coffee_bot/main/install.s
      - Install required libraries including adafruit-circuitpython-servokit
      - Configure port forwarding from port 80 to port 5000
      - Verify I2C connection and detect the PCA9685 chip
-     - Set up the systemd service for auto-start
-~~
+     - Set up the systemd service for auto-start ~~
 
 2. **Verify I2C Connection:**
    After setup, you can manually verify the PCA9685 is detected:
