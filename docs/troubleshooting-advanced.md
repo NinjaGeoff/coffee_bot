@@ -306,7 +306,7 @@ An odd bug/feature I found on the Pi Zero 2W, that I didn't see when doing the i
 - -60 to -70 dBm = Fair (may cause sluggishness)
 - -70 dBm or worse = Poor (most likely causing issues)
 
-If your Wi-Fi signal is in that -30 to -60 dBm, or if getting it into that range by moving your Pi to a better location, and you're still getting bad sluggishness, there are a few optimizations we can make by editing ```sshd_config```
+If your Wi-Fi signal is in that -30 to -60 dBm range, or if getting it into that range by moving your Pi to a better location, and you're still getting bad sluggishness, there are a few optimizations we can make by editing ```/etc/ssh/sshd_config```
 
 ```bash
 # Disable DNS lookup in SSH (prevents timeout waiting for reverse DNS)
