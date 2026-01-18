@@ -103,7 +103,7 @@ An odd bug/feature I found on the Pi Zero 2W, that I didn't see when doing the i
 - -60 to -70 dBm = Fair (may cause sluggishness)
 - -70 dBm or worse = Poor (most likely causing issues)
 
-If your Wi-Fi signal is outside of that -30 to -60 dBm range, try moving it to a location closer to your wireless access point/router to see if it improves performance. If SSH is still awful after that, see #6 in [Advanced Troubleshooting | Network Issues](/docs/troubleshooting-advanced#network-issues).
+If your Wi-Fi signal is outside of that -30 to -60 dBm range, try moving it to a location closer to your wireless access point/router to see if it improves performance. If SSH is still awful after that, see #6 in [Advanced Troubleshooting | Network Issues](/docs/troubleshooting-advanced.md#network-issues).
 
 **More in-depth Documentation:**
   - [Hardware Setup & Wiring](docs/hardware-setup.md)
@@ -174,8 +174,10 @@ coffee_bot/
 ├── setup.sh               # Automated setup script
 ├── templates/
 │   └── index.html         # Web interface
+│   └── index.html         # Documenation template for MD in /docs
 ├── static/                # Generated on first run
 │   └── ntfy_qr.png        # Auto-generated QR code
+│   └── style.css          # CSS for /templates/index.html
 ├── ntfy_topic.txt         # Auto-generated topic file (do not commit)
 └── README.md
 ```
@@ -282,6 +284,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Adafruit ServoKit Library: [GitHub](https://github.com/adafruit/Adafruit_CircuitPython_ServoKit)
 
 ## Future Plans
+
+### Documentation Updates
+- Fix Project Structure as it's behind by a few major versions but I can't be bothered right now
 
 ### Scheduling Features
 - **Add scheduling/timer feature for automatic brewing at set times**
