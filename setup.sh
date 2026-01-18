@@ -1,55 +1,22 @@
 #!/bin/bash
 
-# Get the current system timezone
-CURRENT_TZ=$(timedatectl | grep "Time zone" | awk '{print $3}')
+echo "-----------------------------------------------"
+echo "Calling Timezone Setup Script"
+echo "-----------------------------------------------"
+# Define the script directory
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Ensure the timezone script is executable
+if [ -f "$DIR/set_timezone.sh" ]; then
+    chmod +x "$DIR/set_timezone.sh"
+    "$DIR/set_timezone.sh"
+else
+    echo "WARNING: set_timezone.sh not found, skipping timezone setup."
+fi
 
 echo "-----------------------------------------------"
 echo "COFFEE BOT SYSTEM SETUP - PCA9685 VERSION"
-echo "CURRENT TIMEZONE: $CURRENT_TZ"
-echo "Press enter to confirm or 'n' to change timezone"
 echo "-----------------------------------------------"
-
-if ! read -t 10 -p "Is this timezone correct? (Y/n): " confirm; then
-    echo "No change requested after 10 seconds, keeping existing timezone: $CURRENT_TZ"
-    confirm="y"
-fi
-
-if [[ $confirm == [nN] || $confirm == [nN][oO] ]]; then
-    echo "Select your Timezone region:"
-    
-    # Standardized to America/[City] format
-    options=(
-        "America/New_York" 
-        "America/Chicago" 
-        "America/Denver" 
-        "America/Phoenix" 
-        "America/Los_Angeles" 
-        "America/Anchorage" 
-        "America/Adak"
-        "Pacific/Honolulu"
-        "Exit"
-    )
-    
-    select opt in "${options[@]}"
-    do
-        case $opt in
-            "America/New_York"|"America/Chicago"|"America/Denver"|"America/Phoenix"|"America/Los_Angeles"|"America/Anchorage"|"America/Adak"|"Pacific/Honolulu")
-                echo "Applying timezone: $opt..."
-                sudo timedatectl set-timezone "$opt"
-                break
-                ;;
-            "Exit")
-                echo "Keeping existing timezone: $CURRENT_TZ"
-                break
-                ;;
-            *) echo "Invalid option. Please enter a number from the list.";;
-        esac
-    done
-else
-    echo "Timezone confirmed."
-fi
-
-echo "The system time is now: $(date)"
 
 # Enable I2C interface (required for PCA9685)
 echo "--- Enabling I2C Interface ---"
@@ -85,7 +52,7 @@ fi
 # Note: Installing adafruit-circuitpython-servokit for PCA9685 control
 echo "--- Installing Python Libraries ---"
 $DIR/env/bin/pip install --upgrade pip
-$DIR/env/bin/pip install flask adafruit-circuitpython-servokit qrcode[pil] requests
+$DIR/env/bin/pip install flask adafruit-circuitpython-servokit qrcode[pil] requests markdown
 
 # Setup application folder structure
 echo "--- Setting Up Application Folder Structure ---"
@@ -107,6 +74,16 @@ if [ ! -f "$DIR/templates/index.html" ]; then
 fi
 
 echo "Folder structure validated"
+
+# Create symlink for README.md in the docs folder
+echo "--- Linking README to Documentation ---"
+if [ -f "$DIR/README.md" ]; then
+    # -s: symbolic, -f: force (replaces if exists), -n: treat link as a file
+    ln -sfn "$DIR/README.md" "$DIR/docs/readme.md"
+    echo "Symlink created: /docs/readme.md -> /README.md"
+else
+    echo "WARNING: README.md not found, skipping symlink."
+fi
 
 # Set secure permissions on ntfy topic file if it exists
 if [ -f "$DIR/ntfy_topic.txt" ]; then

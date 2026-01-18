@@ -4,17 +4,17 @@ Coffee Bot Web Interface - PCA9685 Servo Driver Version
 Flask web server for controlling coffee brewing with servos via Waveshare Servo Driver HAT
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import time
 from datetime import datetime
 import os
 import secrets
 import qrcode
-from io import BytesIO
 import threading
 import requests
 from adafruit_servokit import ServoKit
 import logging
+import markdown
 
 app = Flask(__name__)
 
@@ -376,6 +376,42 @@ def status():
     
     logger.debug(f"Status check requested from {request.remote_addr}")
     return jsonify(status_info)
+
+# ============================================================================
+# DOCUMENTATION ROUTES
+# ============================================================================
+
+@app.route('/docs/')
+@app.route('/docs/<path:filename>')
+def serve_docs(filename='index'):
+    """Serve documentation from /docs folder as HTML"""
+    try:
+        # Read the markdown file
+        md_path = os.path.join('docs', f'{filename}.md')
+        with open(md_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Convert to HTML with extensions
+        html_content = markdown.markdown(
+            content, 
+            extensions=[
+                'extra',           # Tables, footnotes, attr_list, etc.
+                'codehilite',      # Code highlighting
+                'fenced_code',     # ```code blocks```
+                'tables',          # Table support
+                'nl2br',           # Newline to <br>
+                'sane_lists',      # Better list handling
+                'toc'              # Table of contents with anchor links
+            ]
+        )
+        
+        # Wrap in template
+        return render_template('docs.html', content=html_content, title=filename.replace('-', ' ').title())
+    except FileNotFoundError:
+        logger.warning(f"Documentation file not found: {filename}")
+        return render_template('docs.html', 
+                             content="<h1>404 - Documentation Not Found</h1><p>The requested documentation page could not be found.</p>",
+                             title="Not Found"), 404
 
 # ============================================================================
 # MAIN
